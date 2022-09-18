@@ -1,6 +1,6 @@
 # CredChain
 
-The project consists of mainly two parts at the moment: backend including smart contracts and frontend including sample React app. 
+The project consists of mainly two parts at the moment: backend including smart contracts and frontend including sample React app.
 
 # How to Run
 
@@ -34,3 +34,6 @@ npx hardhat run scripts/deploy.js
 - [Hardhat Guides](https://hardhat.org/hardhat-runner/docs/guides/project-setup) to compile and deploy smart contracts.
 - [Hardhat Boilerplate Project](https://hardhat.org/tutorial/boilerplate-project) featuring smart contracts and frontend files structure. 
 - [Tutorial for building Web3 Application](https://medium.com/coinmonks/build-a-web-3-application-with-solidity-hardhat-react-and-web3js-61b7ff137885) using Hardhat, React and Web3 library. 
+
+## Code Base 
+- The original CredChain code based was developed by Yue Liu. This is the updated CredChain version to latest Solidity (^0.8.0), utilises new deployment and testing framework (Hardhat and Truffle), includes frontend application and new features (revocation mechanism). 
