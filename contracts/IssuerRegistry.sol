@@ -26,6 +26,8 @@ contract Issuers {
     // issuer address (ID) => true/false
     mapping(address => bool) public registry; 
 
+    // mapping(string => bool) public registryDID; 
+
     address adminRegistryAddress; 
 
     constructor(address _adminRegistryAddress) {

@@ -19,7 +19,7 @@ contract Credentials {
 
     mapping (string => Credential) private credential; 
 
-    function issueCredential(string memory _id, string memory _issuer, string memory _holder, string memory _credHash, string memory _signature, uint256 _validity) public {
+    function addCredential(string memory _id, string memory _issuer, string memory _holder, string memory _credHash, string memory _signature, uint256 _validity) public {
         require (credential[_id].uploaded == false, "credential already exists");
         credential[_id].id = _id;
         credential[_id].issuer = _issuer; 

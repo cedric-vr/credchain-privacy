@@ -15,5 +15,10 @@
     "@nomiclabs/hardhat-web3": "^2.0.0",
     "hardhat": "^2.11.1",
     "web3": "^1.8.0"
+  },
+  "dependencies": {
+    "big-integer": "^1.6.51",
+    "crypto-js": "^4.1.1",
+    "ethereumjs-util": "^7.1.5"
   }
 }

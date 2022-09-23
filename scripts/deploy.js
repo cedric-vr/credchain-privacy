@@ -16,11 +16,11 @@ async function main() {
 	await identityReg.deployed(); 
 	console.log("DID Registry has been deployed to:", identityReg.address); 
 
-	// // Credential registry contract to deploy 
-	// const CredentialRegistry = await ethers.getContractFactory('Credentials');
-	// const credentialReg = await CredentialRegistry.deploy(); 
-	// await credentialReg.deployed();
-	// console.log("Credentials Registry has been deployed to:", credentialReg.address); 
+	// Credential registry contract to deploy 
+	const CredentialRegistry = await ethers.getContractFactory('Credentials');
+	const credentialReg = await CredentialRegistry.deploy(); 
+	await credentialReg.deployed();
+	console.log("Credentials Registry has been deployed to:", credentialReg.address); 
 
 	// // admin account registry 
 	// const AdminRegistry = await ethers.getContractFactory('AdminAccounts');
