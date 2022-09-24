@@ -1,7 +1,8 @@
+var bigInt = require("big-integer");
 
 const { web3, assert, artifacts } = require("hardhat");
 const { generateCredential } = require("../utilities/credential.js"); 
-const { generateAccumulator } = require("../utilities/accumulator.js"); 
+const { generateAccumulator, hashToPrime } = require("../utilities/accumulator.js"); 
 
 // using the following approach for testing: 
 // https://hardhat.org/hardhat-runner/docs/other-guides/truffle-testing
@@ -47,7 +48,14 @@ describe("DID Registry", function() {
 			// generate off-chain 
 			// load the accumulator value to contract 
 			[ n, acc ] = generateAccumulator(); 
-			console.log(acc); 
+			// console.log(acc); 
+
+			// hashToLength(2, 270); 
+			let x = bigInt.randBetween(2, 256); 
+			let [h, nonce] = hashToPrime(x, 256, 0); 
+			
+			console.log(h); 
+			console.log(nonce); 
 		});
 	});
 
