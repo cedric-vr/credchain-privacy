@@ -2,7 +2,39 @@
 var crypto = require('crypto');
 var bigInt = require("big-integer");
 
+// const { primalityTest } = require("primality-test");
+
+const primeSize = 128; 
+
 // https://www.npmjs.com/package/big-integer
+
+function hashToPrime(x, numberOfBits, nonce) {
+    while (true) {
+        let num = hashToLength(x + nonce, numberOfBits); 
+        if (bigInt(num).isProbablePrime()) {
+            return [num, nonce]; 
+        }
+        nonce += 1n; 
+    }     
+}
+
+function hashToLength(x, numberOfBits) {
+    let randomString = ""; 
+    let numberOfBlocks = Math.ceil(numberOfBits / 256); 
+    let hash = crypto.createHash('sha256'); 
+
+    for (let i = 0; i < numberOfBlocks; i++) {
+        randomString += hash.update(String(x + BigInt('0x' + i))); 
+    }
+    randomString = hash.digest('hex');
+
+    if (numberOfBits % 256 > 0) {
+        let rem = parseInt((numberOfBits % 256) / 4); 
+        randomString = randomString.slice(rem); 
+    }
+
+    return BigInt('0x' + randomString); 
+}
 
 function generatePrimes() {
     let p = crypto.generatePrimeSync(1024, {bigint: true});
@@ -10,40 +42,18 @@ function generatePrimes() {
     return p * q; 
 }
 
-function hashToPrime(x, numberOfBits, nonce) {
-    while (true) {
-        let num = hashToLength(x + nonce, numberOfBits); 
-        if (crypto.checkPrimeSync(num)) {
-            return [num, nonce]; 
-        }
-        nonce += 1; 
-    }     
-}
-
-function hashToLength(x, numberOfBits) {
-    let randomString = ""; 
-    let numberOfBlocks = Math.floor(numberOfBits / 256); 
-    let hash = crypto.createHash('sha256'); 
-    for (let i = 0; i < numberOfBlocks; i++) {
-        randomString += hash.update(String(x + i)); 
-    }
-    randomString = hash.digest('hex');
-
-    if (numberOfBits % 256 > 0) {
-        let rem = Math.floor((numberOfBits % 256) / 4); 
-        randomString = randomString.slice(rem * 2); 
-    }
-
-    let digit = BigInt('0x' + randomString); // in BigInt 
-    // return digit.toString(10);            // convert to number 
-    return digit
-}
-
-function generateAccumulator() {
+function gen() {
     let n = generatePrimes(); 
-    let rand = bigInt.randBetween(0, n); 
-    let a0 = bigInt(rand).modPow(2, n); 
-    return [n, a0.value];
+    let g = bigInt.randBetween(0, n); 
+    let acc = bigInt(g).modPow(2, n); 
+    return [n, acc.value];
 }
 
-module.exports = { generateAccumulator, hashToPrime }
+function add(acc0, x) {
+    // convert to prime before adding here? 
+    // let [ hashPrime, nonce ] = hashToPrime(credential, x, primeSize); 
+    let acc = bigInt(x).modPow(acc0, n); 
+    return acc; 
+}
+
+module.exports = { gen, add, hashToPrime }

@@ -13,33 +13,51 @@ contract Accumulator {
 
     // public values 
     // accumulator value 
-    uint256 accumulator; 
-    uint256 n;              // mod n 
+    // uint256 accumulator; 
+    // uint256 n;              // mod n 
+
+
+    bytes accumulator; 
+    bytes n;
+
+    
+    uint256 current;        // keep track of how many bitmaps in the mapping 
+
+    // id => bitmap 
+    mapping(bytes32 => uint256) bitmaps; 
+    // emit once new bitmap added 
+    event bitmap(uint256 id, uint256 bitmap, uint256 accumulator); 
 
     address issuerRegistryAddress; 
 
-    constructor(address _issuerRegistryAddress) {
+    constructor(address _issuerRegistryAddress, bytes memory _accumulator, bytes memory _n) {
         issuerRegistryAddress = _issuerRegistryAddress; 
+        accumulator = _accumulator; 
+        n = _n; 
     }
 
     // only issuer can add values
     // need issuer registry for this 
     modifier onlyIssuer(address _issuer) { require(Issuers(issuerRegistryAddress).checkIssuer(_issuer)); _; }
 
-    // generate accumulator 
-    function Gen() public {
 
+    // get the accumulator and n values stored in contract 
+    function get() public view returns(bytes memory, bytes memory) {
+        return (accumulator, n); 
     }
 
     // add value to accumulator 
     // only registered issuers can do this 
-    function Add(uint256 _credential) public onlyIssuer(msg.sender) {
-        // check if prime 
+    function add(uint256 _bitmap) public returns(bytes memory, uint256) {
+        bytes32 id = keccak256(abi.encodePacked(_bitmap)); 
+        bitmaps[id] = _bitmap; 
+        
+        return (accumulator, _bitmap); 
     }
 
     // verify credential membership in the accumulator 
     // anyone can call this function 
-    function VerMem(uint256 _credential, uint256 _witness, uint256 _accumulator) public {
+    function verMem(uint256 _credential, uint256 _witness, uint256 _accumulator) public {
         // do we need an actual non-membership calulation? 
         // can we just evaluate membership instead? 
         // a = w^x mod n 
@@ -47,9 +65,9 @@ contract Accumulator {
         // if a == 0, then non-member
     }
 
-    // update witness for the given credential 
-    function UpdWit(uint256 _credential) public {
+    // // update witness for the given credential 
+    // function UpdWit(uint256 _credential) public {
 
-    }
+    // }
 
 }
