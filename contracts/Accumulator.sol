@@ -11,27 +11,21 @@ contract Accumulator {
     // because it is a large prime, the collision is negligable 
     // when credential issued, it is mapped to a prime 
 
-    // public values 
-    // accumulator value 
-    // uint256 accumulator; 
-    // uint256 n;              // mod n 
-
-
     bytes accumulator; 
     bytes n;
 
     
-    uint256 current;        // keep track of how many bitmaps in the mapping 
+    // uint256 current;        // keep track of how many bitmaps in the mapping 
 
     // id => bitmap 
     mapping(bytes32 => uint256) bitmaps; 
-    // emit once new bitmap added 
-    event bitmap(uint256 id, uint256 bitmap, uint256 accumulator); 
 
     address issuerRegistryAddress; 
+    address subAccumulatorAddress; 
 
-    constructor(address _issuerRegistryAddress, bytes memory _accumulator, bytes memory _n) {
+    constructor(address _issuerRegistryAddress, /*address _subAccumulatorAddress,*/ bytes memory _accumulator, bytes memory _n) {
         issuerRegistryAddress = _issuerRegistryAddress; 
+        // subAccumulatorAddress = _subAccumulatorAddress; 
         accumulator = _accumulator; 
         n = _n; 
     }
@@ -42,8 +36,13 @@ contract Accumulator {
 
 
     // get the accumulator and n values stored in contract 
-    function get() public view returns(bytes memory, bytes memory) {
+    function getAccumulator() public view returns(bytes memory, bytes memory) {
         return (accumulator, n); 
+    }
+
+    function getBitmap(bytes32 _id) public returns(uint256) {
+        require(_id == keccak256(abi.encodePacked(bitmaps[_id])), "id is not correct"); 
+        
     }
 
     // add value to accumulator 

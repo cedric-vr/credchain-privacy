@@ -2,8 +2,6 @@
 var crypto = require('crypto');
 var bigInt = require("big-integer");
 
-// const { primalityTest } = require("primality-test");
-
 const primeSize = 128; 
 
 // https://www.npmjs.com/package/big-integer

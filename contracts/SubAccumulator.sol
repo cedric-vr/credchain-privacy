@@ -96,30 +96,4 @@ contract SubAccumulator {
         return true;
     }
 
-    // // Please see the test/TestBloomFilter.sol to know how to use this library in another contract.
-
-    // /**
-    //  * @dev It initialize the Filter struct. It sets the appropriate hash count for the expected number of item
-    //  * @param _itemNum Expected number of items to be added
-    //  */
-    // function init(Filter storage _filter, uint _itemNum) internal {
-    //     _filter.hashCount = getHashCount(_itemNum);
-    // }
-
-    // /**
-    //  * @dev It updates the bitmap of the filter using the given item value
-    //  * @param _item Hash value of an item
-    //  */
-    // function add(Filter storage _filter, bytes32 _item) internal {
-    //     _filter.bitmap = addToBitmap(_filter.bitmap, _filter.hashCount, _item);
-    // }
-
-    // /**
-    //  * @dev It returns the filter may include the item or definitely now include it.
-    //  * @param _item Hash value of an item
-    //  */
-    // function check(Filter storage _filter, bytes32 _item) internal view returns(bool) {
-    //     return falsePositive(_filter.bitmap, _filter.hashCount, _item);
-    // }
-
 }
