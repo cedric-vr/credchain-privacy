@@ -47,7 +47,7 @@ function gen() {
     return [n, acc.value];
 }
 
-function add(acc0, x) {
+function add(n, acc0, x) {
     // convert to prime before adding here? 
     // let [ hashPrime, nonce ] = hashToPrime(credential, x, primeSize); 
     let acc = bigInt(x).modPow(acc0, n); 

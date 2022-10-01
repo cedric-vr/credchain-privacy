@@ -3,7 +3,7 @@ var bigInt = require("big-integer");
 const { web3, assert, artifacts, ethers } = require("hardhat");
 const { generateCredential } = require("../utilities/credential.js"); 
 const { gen, add, hashToPrime } = require("../utilities/accumulator.js"); 
-const { initBitmap, addToBitmap, getBitmapData, checkInclusion, packBitmap } = require("../utilities/subAccumulator.js"); 
+const { initBitmap, addToBitmap, getBitmapData, checkInclusion, packBitmap, displayArray } = require("../utilities/subAccumulator.js"); 
 
 // using the following approach for testing: 
 // https://hardhat.org/hardhat-runner/docs/other-guides/truffle-testing
@@ -216,11 +216,13 @@ describe("DID Registry", function() {
 				// convert the credential to a prime 
 				let [credentialPrime, nonce] = hashToPrime(x, 128, 0n); 
 
-				console.log("sending prime:", credentialPrime); 
+				// console.log("sending prime:", credentialPrime); 
 
 				await addToBitmap(subAccInstance, x[1], credentialPrime, accounts[9]); 
 				await packBitmap(subAccInstance, acc); 
 			}
+
+			// displayArray(); 
 
 			// result = await generateCredential("fifth claim", issuer, accounts[4], "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");
 			// credentialE = result[0]; 
