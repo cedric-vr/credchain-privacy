@@ -6,6 +6,35 @@ const primeSize = 128;
 
 // https://www.npmjs.com/package/big-integer
 
+function xgcd(b, a) {
+    let x0 = 1n; 
+    let x1 = 0n;
+    let y0 = 0n;
+    let y1 = 1n; 
+
+    while (a != 0) {
+        let q = bigInt(b).divide(a); 
+        b = a; 
+        a = bigInt(b).mod(a); 
+        console.log("q: ", q.toString(10)); 
+        console.log("b: ", b.toString(10)); 
+        console.log("a: ", a.toString(10));
+
+        x0 = x1; 
+        x1 = bigInt(bigInt(x0).subtract(q)).multiply(x1); 
+
+        y0 = y1; 
+        y1 = bigInt(bigInt(y0).subtract(q).multiply(y1)); 
+    }
+
+    return [ b, x0, y0 ]; 
+}
+
+function bezouteCoefficients(a, b) {
+    let o = xgcd(a, b); 
+    return [ o[1], o[2] ]
+}
+
 function hashToPrime(x, numberOfBits, nonce) {
     while (true) {
         let num = hashToLength(x + nonce, numberOfBits); 
@@ -41,7 +70,8 @@ function generatePrimes() {
 }
 
 function gen() {
-    let n = generatePrimes(); 
+    // let n = generatePrimes(); 
+    let n = 47; 
     let g = bigInt.randBetween(0, n); 
     return [n, g];
 }
@@ -51,7 +81,7 @@ function add(acc, n, x) {
     return bigInt(acc).modPow(x, n); 
 }
 
-function genWit(g, n, x, arr) {
+function genMemWit(g, n, x, arr) {
     let product = 1; 
     // calculate the product of primes except x 
     for (let i = 0; i < arr.length; i++) {
@@ -64,9 +94,23 @@ function genWit(g, n, x, arr) {
     return w; 
 }
 
+function genNonMemWit(g, n, x, arr) {
+    let product = 1; 
+    // calculate the product of primes except x 
+    for (let i = 0; i < arr.length; i++) {
+        if (x != arr[i]) {
+            product = bigInt(product).multiply(arr[i]); 
+        }
+    }
+
+    let [ a, b ] = bezouteCoefficients(x, product); 
+
+    console.log(a, b); 
+}
+
 function ver(acc, n, w, x) {
     // acc = w^x mod n 
     return ((bigInt(w).modPow(x, n)).equals(acc)); 
 }
 
-module.exports = { gen, add, genWit, ver, hashToPrime }
+module.exports = { gen, add, genMemWit, genNonMemWit, ver, hashToPrime }

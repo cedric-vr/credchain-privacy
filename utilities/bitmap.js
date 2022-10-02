@@ -1,8 +1,8 @@
 var bigInt = require("big-integer");
 
 const { ethers } = require("hardhat");
-const { gen, add, genWit, ver, hashToPrime } = require("./accumulator.js"); 
-const { displayArray, storePrime, genEpochAcc, genWitness, endEpoch } = require("./epoch.js");
+const { gen, add, genMemWit, genNonMemWit, ver, hashToPrime } = require("./accumulator.js"); 
+const { getEpochPrimes, storeEpochPrime, endEpoch } = require("./epoch.js");
 
 
 async function initBitmap(instance, capacity) {
@@ -17,18 +17,24 @@ async function addToBitmap(instance, credentialHash, credentialPrime, issuer) {
     let [ bitmap, hashCount, count, capacity ] = await getBitmapData(instance); 
 
     // add prime to the array, ideally this would be the distributed storage 
-    storePrime(credentialPrime); 
+    // storeEpochPrime(credentialPrime); 
 
     // converts prime number to hex string 
     let credentialPrimeHex = "0x" + credentialPrime.toString(16); 
     // converts hex string back to original prime 
     let primeHexToInt = BigInt(credentialPrimeHex); 
 
-    if (count.toNumber() + 1 == capacity.toNumber()) {
-        // capacity reached and new epoch starts
-        // call function to pack everything and start anew 
-        endEpoch(); 
-        
+    // capacity reached, current data is packed and new epoch starts
+    if (count.toNumber() + 10 == capacity.toNumber()) {
+        // packs current epoch primes into accumulator 
+        let acc = await endEpoch(); 
+
+        // console.log(acc); 
+
+
+        // id = hash(acc + bitmap)
+        // let bitmapHash = web3.utils.sha3(bitmap);
+
         // the capacity has been reached
         // issuer does this
         // calculate the id for bitmap = h(bitmap + group key) 
@@ -72,26 +78,8 @@ async function addToBitmap(instance, credentialHash, credentialPrime, issuer) {
     // }
 }
 
-async function packBitmap(instance, accumulator) {
-
-    let [ bitmap, hashCount, count, capacity ] = await getBitmapData(instance); 
-
-    // console.log(bitmap[0].words); 
-    // console.log(bitmap[2].words[0], bitmap[3].words[0]); 
-
-    // for (let i = 0; i < bitmap[0].words.length - 1; i++) {
-    //     console.log(bitmap[0].words[i]); 
-    // }
-
-    let bitmapHash = web3.utils.sha3(bitmap);
-
-    // generate a prime for the bitmap hash 
-    let [ bitmapPrime, nonce ] = hashToPrime(BigInt(bitmapHash), 256, 0n); 
-
-    // console.log(bitmapPrime); 
-}
-
 async function getBitmapData(instance) {
+    // returns bitmap, hashCount, count, capacity
     let data = await instance.getFilter(); 
     return [ data[0], data[1], data[2], data[3] ]; 
 }
@@ -103,4 +91,4 @@ async function checkInclusion(instance, credentialHash) {
     return inclusion; 
 }
 
-module.exports = { initBitmap, addToBitmap, getBitmapData, checkInclusion, packBitmap, displayArray }
+module.exports = { initBitmap, addToBitmap, getBitmapData, checkInclusion }

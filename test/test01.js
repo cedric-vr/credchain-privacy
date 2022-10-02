@@ -3,7 +3,7 @@ var bigInt = require("big-integer");
 const { web3, assert, artifacts, ethers } = require("hardhat");
 const { generateCredential } = require("../utilities/credential.js"); 
 const { gen, add, hashToPrime } = require("../utilities/accumulator.js"); 
-const { initBitmap, addToBitmap, getBitmapData, checkInclusion, packBitmap, displayArray } = require("../utilities/subAccumulator.js"); 
+const { initBitmap, addToBitmap, getBitmapData, checkInclusion, displayArray } = require("../utilities/bitmap.js"); 
 
 // using the following approach for testing: 
 // https://hardhat.org/hardhat-runner/docs/other-guides/truffle-testing
@@ -30,7 +30,7 @@ describe("DID Registry", function() {
 	let hashCount; 
 	let bitmap; 
 	let count; 
-	let capacity = 20; 
+	let capacity = 20; // 250 max 
 
 	// contract instances 
 	let adminRegistryInstance; 
@@ -219,7 +219,7 @@ describe("DID Registry", function() {
 				// console.log("sending prime:", credentialPrime); 
 
 				await addToBitmap(subAccInstance, x[1], credentialPrime, accounts[9]); 
-				await packBitmap(subAccInstance, acc); 
+				// await packBitmap(subAccInstance, acc); 
 			}
 
 			// displayArray(); 
