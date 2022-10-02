@@ -35,23 +35,38 @@ function hashToLength(x, numberOfBits) {
 }
 
 function generatePrimes() {
-    let p = crypto.generatePrimeSync(1024, {bigint: true});
-    let q = crypto.generatePrimeSync(1024, {bigint: true});
+    let p = crypto.generatePrimeSync(2048, {bigint: true});
+    let q = crypto.generatePrimeSync(2048, {bigint: true});
     return p * q; 
 }
 
 function gen() {
     let n = generatePrimes(); 
     let g = bigInt.randBetween(0, n); 
-    let acc = bigInt(g).modPow(2, n); 
-    return [n, acc.value];
+    return [n, g];
 }
 
-function add(n, acc0, x) {
-    // convert to prime before adding here? 
-    // let [ hashPrime, nonce ] = hashToPrime(credential, x, primeSize); 
-    let acc = bigInt(x).modPow(acc0, n); 
-    return acc; 
+function add(acc, n, x) {
+    // acc = acc^x mod n 
+    return bigInt(acc).modPow(x, n); 
 }
 
-module.exports = { gen, add, hashToPrime }
+function genWit(g, n, x, arr) {
+    let product = 1; 
+    // calculate the product of primes except x 
+    for (let i = 0; i < arr.length; i++) {
+        if (x != arr[i]) {
+            product = bigInt(product).multiply(arr[i]); 
+        }
+    }
+    // w = g^product mod n 
+    let w = bigInt(g).modPow(product, n); 
+    return w; 
+}
+
+function ver(acc, n, w, x) {
+    // acc = w^x mod n 
+    return ((bigInt(w).modPow(x, n)).equals(acc)); 
+}
+
+module.exports = { gen, add, genWit, ver, hashToPrime }
