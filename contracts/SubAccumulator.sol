@@ -21,7 +21,6 @@ contract SubAccumulator {
 
     Filter public filter; 
 
-
     constructor(address _issuerRegistryAddress) { 
         issuerRegistryAddress = _issuerRegistryAddress; 
         filter.currentEpoch = 1; 
@@ -37,8 +36,8 @@ contract SubAccumulator {
      * @return uint8 number of hash functions required 
      *
      */
-    function getFilter() public view returns(uint256, uint256, uint256, uint256) {
-        return (filter.bitmap, filter.hashCount, filter.currentCount, filter.capacity); 
+    function getFilter() public view returns(uint256, uint256, uint256, uint256, uint256) {
+        return (filter.bitmap, filter.hashCount, filter.currentCount, filter.capacity, filter.currentEpoch); 
     }
 
     /**
@@ -66,6 +65,17 @@ contract SubAccumulator {
      */
     function updateLock() public initiated(true) {
         lock = false; 
+    }
+
+    /**
+     * @dev once the filter is reset, update the epoch count 
+     * TODO: move this function inside addToBitmap so that when 
+     *       bitmap is 0, new epoch started 
+     */
+    function updateEpoch() public {
+        // check that the epoch actually ended 
+        require(filter.currentCount + 10 == filter.capacity, "capacity has not been reached");
+        filter.currentEpoch++; 
     }
    
     // BITMAP FUNCTIONS -----------------------------------------------------

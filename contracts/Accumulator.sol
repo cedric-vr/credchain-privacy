@@ -40,18 +40,15 @@ contract Accumulator {
         return (accumulator, n); 
     }
 
-    function getBitmap(uint256 _id) public returns(uint256) {
-        // require(_id == keccak256(abi.encodePacked(bitmaps[_id])), "id is not correct"); 
-        
+    function getBitmap(uint256 _id) public view returns(uint256) {
+        return (bitmaps[_id]); 
     }
 
     // add value to accumulator 
     // only registered issuers can do this 
-    function add(uint256 _bitmap) public returns(bytes memory, uint256) {
-        // uint256 id = keccak256(abi.encodePacked(_bitmap)); 
-        // bitmaps[id] = _bitmap; 
-        
-        return (accumulator, _bitmap); 
+    function update(uint256 _id, uint256 _bitmap, bytes memory _accumulator) public {
+        bitmaps[_id] = _bitmap; 
+        accumulator = _accumulator; 
     }
 
     // verify credential membership in the accumulator 

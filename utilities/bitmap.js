@@ -14,7 +14,7 @@ async function initBitmap(instance, capacity) {
 
 async function addToBitmap(instance, element, issuer) {
     
-    let [ bitmap, hashCount, count, capacity ] = await getBitmapData(instance); 
+    let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(instance); 
 
     // add prime to the array, ideally this would be the distributed storage 
     storeEpochPrime(element); 
@@ -35,21 +35,26 @@ async function addToBitmap(instance, element, issuer) {
 
         // reset bitmap 
         bitmap = 0; 
+        // update epoch in the smart contract 
+        await instance.updateEpoch(); 
     }
     
+    // what if more than 1 issuers call the addToBitmap function? 
+    // TODO: lock function for reading and updating bitmap 
+
     bitmap = await instance.addToBitmap(bitmap, hashCount, elementHex, { from: issuer });
     await instance.updateBitmap(bitmap); 
 }
 
 async function getBitmapData(instance) {
-    // returns bitmap, hashCount, count, capacity
+    // returns bitmap, hashCount, count, capacity, epoch
     let data = await instance.getFilter(); 
-    return [ data[0], data[1], data[2], data[3] ]; 
+    return [ data[0], data[1], data[2], data[3], data[4] ]; 
 }
 
-async function checkInclusion(instance, element) {
+async function checkInclusion(instance, bitmap, hashCount, element) {
     // fetch the current bitmap first and then check if contains 
-    let [ bitmap, hashCount, count, capacity ] = await getBitmapData(instance); 
+    // let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(instance); 
     let elementHex = "0x" + element.toString(16);
     let inclusion = await instance.falsePositive(bitmap, hashCount, elementHex); 
     return inclusion; 
