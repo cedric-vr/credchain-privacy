@@ -18,14 +18,14 @@ contract Accumulator {
     // uint256 current;        // keep track of how many bitmaps in the mapping 
 
     // id => bitmap 
-    mapping(bytes32 => uint256) bitmaps; 
+    mapping(uint256 => uint256) bitmaps; 
 
     address issuerRegistryAddress; 
     address subAccumulatorAddress; 
 
-    constructor(address _issuerRegistryAddress, /*address _subAccumulatorAddress,*/ bytes memory _accumulator, bytes memory _n) {
+    constructor(address _issuerRegistryAddress, address _subAccumulatorAddress, bytes memory _accumulator, bytes memory _n) {
         issuerRegistryAddress = _issuerRegistryAddress; 
-        // subAccumulatorAddress = _subAccumulatorAddress; 
+        subAccumulatorAddress = _subAccumulatorAddress; 
         accumulator = _accumulator; 
         n = _n; 
     }
@@ -40,16 +40,16 @@ contract Accumulator {
         return (accumulator, n); 
     }
 
-    function getBitmap(bytes32 _id) public returns(uint256) {
-        require(_id == keccak256(abi.encodePacked(bitmaps[_id])), "id is not correct"); 
+    function getBitmap(uint256 _id) public returns(uint256) {
+        // require(_id == keccak256(abi.encodePacked(bitmaps[_id])), "id is not correct"); 
         
     }
 
     // add value to accumulator 
     // only registered issuers can do this 
     function add(uint256 _bitmap) public returns(bytes memory, uint256) {
-        bytes32 id = keccak256(abi.encodePacked(_bitmap)); 
-        bitmaps[id] = _bitmap; 
+        // uint256 id = keccak256(abi.encodePacked(_bitmap)); 
+        // bitmaps[id] = _bitmap; 
         
         return (accumulator, _bitmap); 
     }

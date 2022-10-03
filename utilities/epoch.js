@@ -1,13 +1,13 @@
 var bigInt = require("big-integer");
 
 const { ethers } = require("hardhat");
-const { gen, add, genMemWit, genNonMemWit, ver, hashToPrime } = require("../utilities/accumulator.js"); 
+const { gen, add, genMemWit, genNonMemWit, verMem, verNonMem, hashToPrime } = require("../utilities/accumulator.js"); 
 
 // for testing, keep the array of primes for each epoch here 
 // otherwise, we can use decentralisede storage to store it 
-// let epochPrimes = []; 
+let epochPrimes = []; 
 
-let epochPrimes = [ 73, 11, 59, 3, 7 ]
+// let epochPrimes = [ 73, 11, 59, 3, 7 ]
 
 // let epochWitnes = []; 
 
@@ -33,10 +33,10 @@ async function endEpoch() {
         acc = add(acc, n, epochPrimes[p]); 
     }
 
-    let x = 83; 
-    genNonMemWit(g, n, x, epochPrimes); 
-
-    console.log(acc); 
+    // let x = 83; 
+    // let [ d, b ] = genNonMemWit(g, n, x, epochPrimes); 
+    // let v1 = verNonMem(g, acc, d, b, x, n); 
+    // console.log(v1); 
 
     return acc; 
 

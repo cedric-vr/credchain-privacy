@@ -7,14 +7,27 @@ contract SubAccumulator {
 
     // copyright: https://github.com/wanseob/solidity-bloom-filter
 
+    address issuerRegistryAddress;
+
+    bool lock = false;              // lock for initial set up functions 
+
     struct Filter {
-        uint256 bitmap;
-        uint8 hashCount;
-        uint8 capacity; 
-        uint8 currentCount; 
+        uint8 hashCount;            // how many hashes for element 
+        uint256 bitmap;             // whole bitmap 
+        uint256 capacity;           // total capacity filter can hold 
+        uint256 currentCount;       // track how many elements has been added 
+        uint256 currentEpoch;       // track the id of the epoch 
     }
 
     Filter public filter; 
+
+
+    constructor(address _issuerRegistryAddress) { 
+        issuerRegistryAddress = _issuerRegistryAddress; 
+        filter.currentEpoch = 1; 
+    }
+
+    modifier initiated(bool _status) { require(lock == _status); _; }
 
     // UTILITY FUNCTIONS ----------------------------------------------------
 
@@ -24,28 +37,39 @@ contract SubAccumulator {
      * @return uint8 number of hash functions required 
      *
      */
-    function getFilter() public view returns(uint256, uint8, uint8, uint8) {
+    function getFilter() public view returns(uint256, uint256, uint256, uint256) {
         return (filter.bitmap, filter.hashCount, filter.currentCount, filter.capacity); 
     }
 
     /**
-     * @dev   storing the latest bitmap, anyone can access 
+     * @dev   storing the latest bitmap, anyone can access;
+     *        increase counter by 1 every time bitmap updated
      * @param _bitmap latest bitmap to store in contract
      */
     function updateBitmap(uint256 _bitmap) public {
-        filter.bitmap = _bitmap; 
-        filter.currentCount++; 
+        filter.bitmap = _bitmap; filter.currentCount++; 
     }
 
     /**
-     * @dev   get the number of hash func required 
+     * @dev   update the number of hash func required and capacity
+     *        called once during deployment 
      * @param _hashCount how many hashes are required
      */
-    function updateHashCount(uint8 _hashCount, uint8 _capacity) public {
-        filter.hashCount = _hashCount; 
-        filter.capacity = _capacity; 
+    function updateHashCount(uint8 _hashCount, uint256 _capacity) public initiated(false) {
+        lock = true; // lock this function, no one can change hash count and capacity 
+        filter.hashCount = _hashCount; filter.capacity = _capacity; 
+    }
+
+    /**
+     * @dev helper function to reset lock to false 
+     * TODO: restrict access who can unlock
+     */
+    function updateLock() public initiated(true) {
+        lock = false; 
     }
    
+    // BITMAP FUNCTIONS -----------------------------------------------------
+    
     /**
      * @dev It returns how many times it should be hashed, when the expected
      *      number of input items is _itenNum.
@@ -57,8 +81,6 @@ contract SubAccumulator {
         else return 255;
     }
 
-    // BITMAP FUNCTIONS -----------------------------------------------------
-
     /**
      * @dev It returns updated bitmap when a new item is added into the bitmap
      * @param _bitmap Original bitmap
@@ -67,6 +89,7 @@ contract SubAccumulator {
      * @param _item Hash value of an item
      */
     function addToBitmap(uint256 _bitmap, uint8 _hashCount, bytes32 _item) public pure returns(uint256 _newBitmap) {
+        // if (_bitmap == 0) { filter.currentEpoch++; }
         _newBitmap = _bitmap;
         require(_hashCount > 0, "Hash count can not be zero");
         for(uint i = 0; i < _hashCount; i++) {

@@ -7,24 +7,23 @@ const primeSize = 128;
 // https://www.npmjs.com/package/big-integer
 
 function xgcd(b, a) {
-    let x0 = 1n; 
-    let x1 = 0n;
-    let y0 = 0n;
-    let y1 = 1n; 
+    let x0 = 1n; x1 = 0n; y0 = 0n; y1 = 1n; 
 
     while (a != 0) {
         let q = bigInt(b).divide(a); 
-        b = a; 
+        let bb = a; 
         a = bigInt(b).mod(a); 
-        console.log("q: ", q.toString(10)); 
-        console.log("b: ", b.toString(10)); 
-        console.log("a: ", a.toString(10));
+        b = bb; 
 
-        x0 = x1; 
-        x1 = bigInt(bigInt(x0).subtract(q)).multiply(x1); 
+        let x00 = x1; 
+        let x1a = bigInt(q).multiply(x1); 
+        x1 = bigInt(x0).subtract(x1a); 
+        x0 = x00; 
 
-        y0 = y1; 
-        y1 = bigInt(bigInt(y0).subtract(q).multiply(y1)); 
+        let y00 = y1; 
+        let y1a = bigInt(q).multiply(y1); 
+        y1 = bigInt(y0).subtract(y1a); 
+        y0 = y00; 
     }
 
     return [ b, x0, y0 ]; 
@@ -70,8 +69,7 @@ function generatePrimes() {
 }
 
 function gen() {
-    // let n = generatePrimes(); 
-    let n = 47; 
+    let n = generatePrimes(); 
     let g = bigInt.randBetween(0, n); 
     return [n, g];
 }
@@ -96,6 +94,7 @@ function genMemWit(g, n, x, arr) {
 
 function genNonMemWit(g, n, x, arr) {
     let product = 1; 
+    let d = 1; 
     // calculate the product of primes except x 
     for (let i = 0; i < arr.length; i++) {
         if (x != arr[i]) {
@@ -105,12 +104,40 @@ function genNonMemWit(g, n, x, arr) {
 
     let [ a, b ] = bezouteCoefficients(x, product); 
 
-    console.log(a, b); 
+    if (a < 0n) {
+        let positiveA = bigInt(-a); 
+        let inverse_g = bigInt(g).modInv(n);
+        d = bigInt(inverse_g).modPow(positiveA, n); 
+    } 
+    else {
+        d = bigInt(g).modPow(a, n); 
+    }
+
+    return [ d, b ]; 
 }
 
-function ver(acc, n, w, x) {
+function verMem(acc, n, w, x) {
     // acc = w^x mod n 
     return ((bigInt(w).modPow(x, n)).equals(acc)); 
 }
 
-module.exports = { gen, add, genMemWit, genNonMemWit, ver, hashToPrime }
+function verNonMem(g, acc, d, b, x, n) {
+    let secondPower;
+
+    if (b < 0) {
+        let positiveB = bigInt(-b); 
+        let inverse_acc = bigInt(acc).modInv(n);
+        secondPower = bigInt(inverse_acc).modPow(positiveB, n); 
+    }
+    else {
+        secondPower = bigInt(acc).modPow(b, n); 
+    }
+
+    let k = bigInt(d).modPow(x, n); 
+    let j = bigInt(k).multiply(secondPower);
+    return bigInt(j).mod(n).equals(g); 
+}
+
+
+
+module.exports = { gen, add, genMemWit, genNonMemWit, verMem, verNonMem, generatePrimes, hashToPrime }

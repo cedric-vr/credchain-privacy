@@ -2,7 +2,7 @@ var bigInt = require("big-integer");
 
 const { web3, assert, artifacts, ethers } = require("hardhat");
 const { generateCredential } = require("../utilities/credential.js"); 
-const { gen, add, hashToPrime } = require("../utilities/accumulator.js"); 
+const { gen, add, genMemWit, genNonMemWit, verMem, verNonMem, generatePrimes, hashToPrime } = require("../utilities/accumulator.js"); 
 const { initBitmap, addToBitmap, getBitmapData, checkInclusion, displayArray } = require("../utilities/bitmap.js"); 
 
 // using the following approach for testing: 
@@ -23,32 +23,27 @@ describe("DID Registry", function() {
 	// let credentialHash; 
 
 	// accumulator values 
-	let n; 
-	let acc; 
-	let nHex;
-	let accHex;
-	let hashCount; 
-	let bitmap; 
-	let count; 
-	let capacity = 20; // 250 max 
+	// let n; 
+	// let acc; 
+	// let nHex;
+	// let accHex;
+	// let hashCount; 
+	// let bitmap; 
+	// let count; 
+	let capacity = 50; // up to uin256 max elements 
 
 	// contract instances 
 	let adminRegistryInstance; 
 	let issuerRegistryInstance; 
 	let didRegistryInstance; 
 	let credRegistryInstance; 
-	let subAccInstance; 
+	let bitmapInstance; 
 	let accInstance; 
 
 	before(async function() {
 		accounts = await web3.eth.getAccounts();
 		holder = accounts[1];
 		issuer = accounts[2]; 
-
-		n = ethers.BigNumber.from("47643528160891675565126238547163111887484326886055461416775020064289531390604564705648563220827741441560905225590804091264357726140010074764429939594692182602235322413599096016182557617562288701004156654709452086576034870336750119695378089965791470985478710785584849145500150725644610695795125276924863689844490798629599870574966646813654060926330005592211440615022872009220682541631879141125958326535287959828944991795484308179430662029514851051991144010839809825876366320420647768580310468491284575397858605962168068225300630426537785377598473023539626567846166766986870774130243291659609017875777145878601303912717");
-		nHex = n.toHexString();
-		acc = ethers.BigNumber.from("17621266142382773614174615728319434627798107601747459646923814612135306245239728690235558002873486695714654363593317636509697669735992222587382420031191701735716188803558390063319837464175593673626492342085018391742136535089257681463192646155736401392584374451461767247472372907736539198332120662694079838142023338060903355511387646740263822910524133939154298424025389806555329961771450633023197173425632660853135910539771780537991916594062284735066180890207436461519486678562728387426850939558582439018870640771157770670431250181084395223118074668046630229539607588897912554661801318180267638637813554796080464807716");
-		accHex = acc.toHexString();
 	});
 
 	describe("Deployment", function() {
@@ -60,7 +55,7 @@ describe("DID Registry", function() {
 		});
 
 		it('Deploying the Issuers Registry contract', async() => {
-			issuerRegistryInstance = await Cred.new(adminRegistryInstance.address); 
+			issuerRegistryInstance = await Issuer.new(adminRegistryInstance.address); 
 			await web3.eth.getBalance(issuerRegistryInstance.address).then((balance) => {
 				assert.equal(balance, 0, "check balance of the contract"); 
 			});
@@ -80,49 +75,26 @@ describe("DID Registry", function() {
 			});
 		});
 
-		it('Deploying and generating sub-accumulator', async() => {
-			subAccInstance = await SubAcc.new(); 
-			await web3.eth.getBalance(subAccInstance.address).then((balance) => {
+		it('Deploying and generating bitmap', async() => {
+			bitmapInstance = await SubAcc.new(issuerRegistryInstance.address); 
+			await web3.eth.getBalance(bitmapInstance.address).then((balance) => {
 				assert.equal(balance, 0, "check balance of the contract"); 
 			});
+
+			// calculate how many hash function needed and update in contract
+			await initBitmap(bitmapInstance, capacity); 
 		});
 
 		it('Deploying and generating global accumulator', async() => {
-			accInstance = await Acc.new(issuerRegistryInstance.address, accHex, nHex); 
+			let [n, acc] = gen(); 
+			// when adding bytes to contract, need to concat with "0x"
+			let nHex = "0x" + bigInt(n).toString(16); // convert back to bigInt with bigInt(nHex.slice(2), 16)
+			let accHex = "0x" + bigInt(acc).toString(16); 
+
+			accInstance = await Acc.new(issuerRegistryInstance.address, bitmapInstance.address, accHex, nHex); 
 			await web3.eth.getBalance(accInstance.address).then((balance) => {
 				assert.equal(balance, 0, "check balance of the contract"); 
 			});
-		});
-
-		it('Generating accumulators', async() => {
-			// first know how many hash function needed for # of elements 
-			// then update that number in the contract 
-			await initBitmap(subAccInstance, capacity); 
-
-			// fetch the filter data from the contract 
-			let result = await getBitmapData(subAccInstance); 
-			assert.equal(capacity, result[3].words[0], "checing the capacity stored"); 
-
-			// hashCount = await subAccInstance.getHashCount(capacity); 
-
-			// generate off-chain 
-			// load the accumulator value to contract 
-			[n, acc] = gen(); 
-
-			// let x = bigInt.randBetween(2, 256); 
-			// let [h, nonce] = hashToPrime(x, 256, 0); 
-			
-			// console.log(h); 
-			// console.log(nonce); 
-
-			// let x = BigInt(credentialHash); // convert credential hash to big int 
-			// let x = BigInt('0x' + 'e0f05da93a0f5a86a3be5fc0e301606513c9f7e59dac2357348aa0f2f47db984'); 
-			// convert the credential to a prime 
-			// let [credentialPrime, nonce] = hashToPrime(x, 128, 0n); 
-			// console.log("resulting prime hash:", credentialPrime); 
-
-			// store the prime in the SC? 
-			
 		});
 	});
 
@@ -218,11 +190,30 @@ describe("DID Registry", function() {
 
 				// console.log("sending prime:", credentialPrime); 
 
-				await addToBitmap(subAccInstance, x[1], credentialPrime, accounts[9]); 
+				await addToBitmap(bitmapInstance, credentialPrime, accounts[9]); 
 				// await packBitmap(subAccInstance, acc); 
 			}
 
 			// displayArray(); 
+
+			console.log("inclusion check:")
+
+			for (let item of inclusionSet) {
+				let x = await generateCredential(item, issuer, accounts[4], "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");
+				let [credentialPrime, nonce] = hashToPrime(x, 128, 0n); 
+				let res = await checkInclusion(bitmapInstance, credentialPrime); 
+				console.log(item, ":", res); 
+			}
+
+			console.log("\nexclusion check:")
+
+			let exclusionSet = ['abc', 'bcd', 'cef', 'dgh'];
+			for (let item of exclusionSet) {
+				let x = await generateCredential(item, issuer, accounts[4], "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");
+				let [credentialPrime, nonce] = hashToPrime(x, 128, 0n); 
+				let res = await checkInclusion(bitmapInstance, credentialPrime); 
+				console.log(item, ":", res); 
+			}
 
 			// result = await generateCredential("fifth claim", issuer, accounts[4], "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC");
 			// credentialE = result[0]; 
