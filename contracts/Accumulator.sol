@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./IssuerRegistry.sol"; 
+import "./SubAccumulator.sol";
 
 contract Accumulator {
 
@@ -46,14 +47,17 @@ contract Accumulator {
 
     // add value to accumulator 
     // only registered issuers can do this 
-    function update(uint256 _id, uint256 _bitmap, bytes memory _accumulator) public {
-        bitmaps[_id] = _bitmap; 
+    // only called when epoch ended and new bitmap added to the mapping
+    function update(uint256 _bitmap, bytes memory _accumulator) public {
+        SubAccumulator acc = SubAccumulator(subAccumulatorAddress); 
+        uint256 epoch = acc.getEpoch(); 
+        bitmaps[epoch] = _bitmap; 
         accumulator = _accumulator; 
     }
 
     // verify credential membership in the accumulator 
     // anyone can call this function 
-    function verMem(uint256 _credential, uint256 _witness, uint256 _accumulator) public {
+    function verMem() public {
         // do we need an actual non-membership calulation? 
         // can we just evaluate membership instead? 
         // a = w^x mod n 

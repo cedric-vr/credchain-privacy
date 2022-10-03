@@ -8,6 +8,7 @@ contract SubAccumulator {
     // copyright: https://github.com/wanseob/solidity-bloom-filter
 
     address issuerRegistryAddress;
+    // address globalAccAddress; 
 
     bool lock = false;              // lock for initial set up functions 
 
@@ -38,6 +39,10 @@ contract SubAccumulator {
      */
     function getFilter() public view returns(uint256, uint256, uint256, uint256, uint256) {
         return (filter.bitmap, filter.hashCount, filter.currentCount, filter.capacity, filter.currentEpoch); 
+    }
+
+    function getEpoch() public view returns(uint256) {
+        return (filter.currentEpoch); 
     }
 
     /**
