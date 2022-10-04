@@ -6,7 +6,8 @@ var util = require('ethereumjs-util');
 async function generateCredential(holderInfo, holderAccount, issuerAccount, issuerPrivateKey, epoch) {
 
     let now = new Date(); 
-    let credentialID = web3.utils.sha3(issuerAccount + now); 
+    // holder info should be different to make sure hash is different for each credential
+    let credentialID = web3.utils.sha3(issuerAccount + now + holderInfo); 
 
     // Create the credential. Whatever the id repo query responded with is now the claim.
     var credential = {

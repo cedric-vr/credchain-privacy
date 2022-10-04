@@ -16,30 +16,14 @@ const Issuer = artifacts.require("Issuers");
 const SubAcc = artifacts.require("SubAccumulator"); 
 const Acc = artifacts.require("Accumulator"); 
 
-// Scenario 1: 
-// User attempts to verify during issuance epoch.
-// 		1. User sends issuance epoch ID and corresponding prime to the verifier. 
-// 		2. Verifier retrieves latest bitmap using epoch ID.
-// 		3. Verifier checks the inclusion of prime in bitmap: 
-// 			if present then fail,
-// 			else verification pass.  
 
 describe("DID Registry", function() {
 	let accounts;
 	let holder;
 	let issuer; 
-	// let credential; 
-	// let credentialHash; 
 
-	// accumulator values 
-	// let n; 
-	// let acc; 
-	// let nHex;
-	// let accHex;
-	// let hashCount; 
-	// let bitmap; 
-	// let count; 
-	let capacity = 20; // up to uin256 max elements 
+	// bitmap capacity 
+	let capacity = 30; // up to uin256 max elements 
 
 	// contract instances 
 	let adminRegistryInstance; 
@@ -126,11 +110,11 @@ describe("DID Registry", function() {
 			
 			for (let item of inclusionSet) {
 				// credential hash for each item in set 
-				let x = await generateCredential(item, issuer, accounts[4], "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", epoch.toNumber());
+				let [ credential, credentialHash, sig ] = await generateCredential(item, issuer, accounts[4], "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", epoch.toNumber());
 				// convert the credential to a prime 
-				let [credentialPrime, nonce] = hashToPrime(x, 128, 0n); 
+				let [credentialPrime, nonce] = hashToPrime(credentialHash, 128, 0n); 
 				// imitate user's storage of credentials 
-				credentials.push([ x, credentialPrime ]); 
+				credentials.push([ credentialHash, credentialPrime ]); 
 				// send to update bitmap 
 				await addToBitmap(bitmapInstance, accInstance, credentialPrime, accounts[9]); 
 			}
@@ -139,7 +123,7 @@ describe("DID Registry", function() {
 			// retrieve it from local storage to check the inclusion
 			let [ xCred, xPrime ] = credentials[3]; 
 			// get latest bitmap 
-			let latest = await getBitmapData(bitmapInstance); 
+			let latest = await getBitmapData(bitmapInstance);  
 			let res = await checkInclusion(bitmapInstance, latest[0], hashCount, xPrime); 
 			assert.isTrue(res, "the credential is in bitmap"); 
 		}); 
@@ -147,9 +131,9 @@ describe("DID Registry", function() {
 		it('Verifying membership of a credential in bitmap', async() => {
 			let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
 			// assuming user can retrieve this from local storage and not calculate again 
-			let x = await generateCredential('f', issuer, accounts[4], "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", epoch.toNumber());
+			let [ credential, credentialHash, sig ] = await generateCredential('f', issuer, accounts[4], "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", epoch.toNumber());
 			// convert the credential to a prime 
-			let [credentialPrime, nonce] = hashToPrime(x, 128, 0n); 
+			let [credentialPrime, nonce] = hashToPrime(credentialHash, 128, 0n); 
 			let res = await checkInclusion(bitmapInstance, bitmap, hashCount, credentialPrime); 
 			assert.isTrue(res, "the credential is in bitmap"); 
 		}); 
@@ -157,9 +141,9 @@ describe("DID Registry", function() {
 		it('Verifying non-membership of a credential in bitmap', async() => {
 			let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
 			// assume there is a credential that is not in bitmap
-			let x = await generateCredential('xyz', issuer, accounts[4], "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", epoch.toNumber());
+			let [ credential, credentialHash, sig ] = await generateCredential('xyz', issuer, accounts[4], "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", epoch.toNumber());
 			// convert the credential to a prime 
-			let [credentialPrime, nonce] = hashToPrime(x, 128, 0n); 
+			let [credentialPrime, nonce] = hashToPrime(credentialHash, 128, 0n); 
 			let res = await checkInclusion(bitmapInstance, bitmap, hashCount, credentialPrime); 
 			assert.isFalse(res, "the credential is not in bitmap"); 
 		}); 
@@ -171,7 +155,7 @@ describe("DID Registry", function() {
 
 		it('Checking the bitmap current capacity', async() => {
 			let [ bitmap, hashCount, count, _capacity, epoch ] = await getBitmapData(bitmapInstance);
-			// assert.equal(11, count, "current capacity is 11"); 
+			assert.equal(11, count, "current capacity is 11"); 
 		}); 
 
 		it('Checking the bitmap capacity', async() => {
@@ -181,6 +165,13 @@ describe("DID Registry", function() {
 	});
 
 	describe('User attempts to verify during issuance epoch', function() {
+		// Scenario 1: 
+		// User attempts to verify during issuance epoch.
+		// 		1. User sends issuance epoch ID and corresponding prime to the verifier. 
+		// 		2. Verifier retrieves latest bitmap using epoch ID.
+		// 		3. Verifier checks the inclusion of prime in bitmap: 
+		// 			if present then fail,
+		// 			else verification pass.  
 
 		// assume local storage of those values on user's device 
 		let credential; 
@@ -215,28 +206,120 @@ describe("DID Registry", function() {
 		it('Verifier retrieving the bitmap using provided epoch ID and verifies inclusion', async() => {
 			// verifier gets the latest data from SC 
 			let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(bitmapInstance); 
+			// then get the latest bitmap and check inclusion 
+			let inclusion = await checkInclusion(bitmapInstance, currentBitmap, hashCount, credentialPrime); 
+			// the credential has not been revoked, thus verification pass
+			assert.isFalse(inclusion, "the credential is not in bitmap"); 
 
-			// if epoch ID == current epoch
-			if (currentEpoch == epoch) {
-				// then get the latest bitmap and check inclusion 
-				let inclusion = await checkInclusion(bitmapInstance, currentBitmap, hashCount, credentialPrime); 
-				// the credential has not been revoked 
-				assert.isFalse(inclusion, "the credential is not in bitmap"); 
-			} 
-			// else look for mapping by epoch ID in global accumulator 
-			else {
-				let pastBitmap = await accInstance.getBitmap(currentEpoch); 
-				// then get the latest bitmap and check inclusion 
-				let inclusion = await checkInclusion(bitmapInstance, pastBitmap, hashCount, credentialPrime); 
-				// the credential has not been revoked 
-				assert.isFalse(inclusion, "the credential is not in bitmap"); 
+			// // if epoch ID == current epoch
+			// if (currentEpoch == epoch) {
+			// 	// then get the latest bitmap and check inclusion 
+			// 	let inclusion = await checkInclusion(bitmapInstance, currentBitmap, hashCount, credentialPrime); 
+			// 	// the credential has not been revoked 
+			// 	assert.isFalse(inclusion, "the credential is not in bitmap"); 
+			// } 
+			// // else look for mapping by epoch ID in global accumulator 
+			// else {
+			// 	let pastBitmap = await accInstance.getBitmap(currentEpoch); 
+			// 	// then get the latest bitmap and check inclusion 
+			// 	let inclusion = await checkInclusion(bitmapInstance, pastBitmap, hashCount, credentialPrime); 
+			// 	// the credential has not been revoked 
+			// 	assert.isFalse(inclusion, "the credential is not in bitmap"); 
 
-				// check the bitmap inclusion in global accumulator 
-				// let globalAcc = await accInstance.getAccumulator(); 
-				// compute witness 
+			// 	// check the bitmap inclusion in global accumulator 
+			// 	// let globalAcc = await accInstance.getAccumulator(); 
+			// 	// compute witness 
 
-				// verify 
-			}
+			// 	// verify 
+			// }
+
+		}); 
+
+	}); 
+
+	describe('User attempts to verify during subsequent epoch', function() {
+		// Scenario 2: 
+		// 1. User sends issuance epoch ID and corresponding prime to the verifier.
+		// 2. Verifier retrieves bitmap from mapping though epoch ID. 
+		// 3. Verifier checks the inclusion of prime in bitmap: 
+		// 		if present then fail, 
+		// 		else 
+		// 			Verify issuance epoch ID acc membership in global acc 
+		// 				If failed, then verification failed (acc not in global)
+		// 				else
+		// 					for each subsequent epoch bitmap check inclusion 
+		// 						if present fail, 
+		// 							Verify epoch acc membership in global acc
+		// 						else if epoch is the current epoch and credential not present, verification pass 
+		// 							Verify epoch acc membership in global acc 
+
+		// assume local storage of those values on user's device 
+		let credential; 
+		let credentialHash; 
+		let sig; 
+		let epoch; 
+		let credentialPrime; 
+
+		it('Issuer generates a credential to the user', async() => {
+			// an issuer requests the current epoch from the bitmap contract
+			let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
+			// then use this epoch ID to include into credential 
+			[ credential, credentialHash, sig ] = await generateCredential('some other claim', holder, issuer, "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", epoch.toNumber());
+			// convert the credential to a prime 
+			let [credentialPrime, nonce] = hashToPrime(credentialHash, 128, 0n); 
+			// store the prime in distributed storage (should the issuer do this, user or both independently?)
+			storeEpochPrime(credentialPrime); 
+
+			await credRegistryInstance.addCredential(credential.id, credential.issuer, credential.holder, credentialHash, sig, 100, credential.epoch)
+			// check the credential in contract 
+			let res = await credRegistryInstance.getCredential(credential.id); 
+			assert.equal(res[1], holder, "the credential holder is the same"); 
+		}); 
+
+		it('User sends issuance epoch ID and corresponding prime to the verifier', async() => {
+			// user sends this data to the verifier 
+			epoch = credential.epoch; 
+			credentialPrime = hashToPrime(credentialHash, 128, 0n)[0]; 
+			assert.equal(1, epoch, "epoch is 1"); 
+		}); 
+
+		it('Verifier retrieving the bitmap from mapping using provided epoch ID and verifies inclusion', async() => {
+			// verifier gets the latest data from SC 
+			let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(bitmapInstance); 
+
+			let pastBitmap = await accInstance.getBitmap(currentEpoch); 
+			// then get the latest bitmap and check inclusion 
+			let inclusion = await checkInclusion(bitmapInstance, pastBitmap, hashCount, credentialPrime); 
+			// the credential has not been revoked 
+			assert.isFalse(inclusion, "the credential is not in bitmap"); 
+
+			// check the bitmap inclusion in global accumulator 
+			// let globalAcc = await accInstance.getAccumulator(); 
+			// compute witness 
+
+			// verify 
+
+			// // if epoch ID == current epoch
+			// if (currentEpoch == epoch) {
+			// 	// then get the latest bitmap and check inclusion 
+			// 	let inclusion = await checkInclusion(bitmapInstance, currentBitmap, hashCount, credentialPrime); 
+			// 	// the credential has not been revoked 
+			// 	assert.isFalse(inclusion, "the credential is not in bitmap"); 
+			// } 
+			// // else look for mapping by epoch ID in global accumulator 
+			// else {
+			// 	let pastBitmap = await accInstance.getBitmap(currentEpoch); 
+			// 	// then get the latest bitmap and check inclusion 
+			// 	let inclusion = await checkInclusion(bitmapInstance, pastBitmap, hashCount, credentialPrime); 
+			// 	// the credential has not been revoked 
+			// 	assert.isFalse(inclusion, "the credential is not in bitmap"); 
+
+			// 	// check the bitmap inclusion in global accumulator 
+			// 	// let globalAcc = await accInstance.getAccumulator(); 
+			// 	// compute witness 
+
+			// 	// verify 
+			// }
 
 		}); 
 
