@@ -70,7 +70,6 @@ function generatePrimes() {
 
 function gen() {
     let n = generatePrimes(); 
-    // let n = 47; 
     let g = bigInt.randBetween(0, n); 
     return [n, g];
 }

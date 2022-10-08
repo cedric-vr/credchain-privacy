@@ -51,7 +51,8 @@ contract SubAccumulator {
      * @param _bitmap latest bitmap to store in contract
      */
     function updateBitmap(uint256 _bitmap) public {
-        filter.bitmap = _bitmap; filter.currentCount++; 
+        filter.bitmap = _bitmap; 
+        filter.currentCount++; 
     }
 
     /**

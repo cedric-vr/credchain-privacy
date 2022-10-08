@@ -30,7 +30,7 @@ describe("DID Registry", function() {
 	let issuerRegistryInstance; 
 	let didRegistryInstance; 
 	let credRegistryInstance; 
-	let bitmapInstance; 
+	let subAccInstance; 
 	let accInstance; 
 
 	before(async function() {
@@ -69,13 +69,13 @@ describe("DID Registry", function() {
 		});
 
 		it('Deploying and generating bitmap', async() => {
-			bitmapInstance = await SubAcc.new(issuerRegistryInstance.address /*, accInstance.address*/); 
-			await web3.eth.getBalance(bitmapInstance.address).then((balance) => {
+			subAccInstance = await SubAcc.new(issuerRegistryInstance.address /*, accInstance.address*/); 
+			await web3.eth.getBalance(subAccInstance.address).then((balance) => {
 				assert.equal(balance, 0, "check balance of the contract"); 
 			});
 
 			// calculate how many hash function needed and update in contract
-			await initBitmap(bitmapInstance, capacity); 
+			await initBitmap(subAccInstance, capacity); 
 		});
 
 		it('Deploying and generating global accumulator', async() => {
@@ -84,7 +84,7 @@ describe("DID Registry", function() {
 			let nHex = "0x" + bigInt(n).toString(16); // convert back to bigInt with bigInt(nHex.slice(2), 16)
 			let gHex = "0x" + bigInt(g).toString(16); 
 
-			accInstance = await Acc.new(issuerRegistryInstance.address, bitmapInstance.address, gHex, nHex); 
+			accInstance = await Acc.new(issuerRegistryInstance.address, subAccInstance.address, gHex, nHex); 
 			await web3.eth.getBalance(accInstance.address).then((balance) => {
 				assert.equal(balance, 0, "check balance of the contract"); 
 			});
@@ -105,7 +105,7 @@ describe("DID Registry", function() {
 	describe("Credentials Revocation Functionality", function() {
 	
 		it('Add credentials to the bitmap', async() => {
-			let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
+			let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(subAccInstance); 
 			let inclusionSet = [ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k' ];
 			let credentials = []; 
 			
@@ -117,53 +117,53 @@ describe("DID Registry", function() {
 				// imitate user's storage of credentials 
 				credentials.push([ credentialHash, credentialPrime ]); 
 				// send to update bitmap 
-				await addToBitmap(bitmapInstance, accInstance, credentialPrime); 
+				await addToBitmap(subAccInstance, accInstance, credentialPrime); 
 			}
 
 			// assume credential and prime was stored by the user
 			// retrieve it from local storage to check the inclusion
 			let [ xCred, xPrime ] = credentials[3]; 
 			// get latest bitmap 
-			let latest = await getBitmapData(bitmapInstance);  
-			await checkInclusionBitmap(bitmapInstance, latest[0], hashCount, xPrime).then((result) => {
+			let latest = await getBitmapData(subAccInstance);  
+			await checkInclusionBitmap(subAccInstance, latest[0], hashCount, xPrime).then((result) => {
 				assert.isTrue(result, "the credential is in bitmap"); 
 			})
 		}); 
 
 		it('Verifying membership of a credential in bitmap', async() => {
-			let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
+			let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(subAccInstance); 
 			// assuming user can retrieve this from local storage and not calculate again 
 			let [ credential, credentialHash, sig ] = await generateCredential('f', issuer, accounts[4], "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", epoch.toNumber());
 			// convert the credential to a prime 
 			let [credentialPrime, nonce] = hashToPrime(credentialHash, 128, 0n); 
-			await checkInclusionBitmap(bitmapInstance, bitmap, hashCount, credentialPrime).then((result) => {
+			await checkInclusionBitmap(subAccInstance, bitmap, hashCount, credentialPrime).then((result) => {
 				assert.isTrue(result, "the credential is in bitmap"); 
 			}); 
 		}); 
 
 		it('Verifying non-membership of a credential in bitmap', async() => {
-			let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
+			let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(subAccInstance); 
 			// assume there is a credential that is not in bitmap
 			let [ credential, credentialHash, sig ] = await generateCredential('xyz', issuer, accounts[4], "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", epoch.toNumber());
 			// convert the credential to a prime 
 			let [credentialPrime, nonce] = hashToPrime(credentialHash, 128, 0n); 
-			await checkInclusionBitmap(bitmapInstance, bitmap, hashCount, credentialPrime).then((result) => {
+			await checkInclusionBitmap(subAccInstance, bitmap, hashCount, credentialPrime).then((result) => {
 				assert.isFalse(result, "the credential is not in bitmap"); 
 			});
 		}); 
 
 		it('Cheching the current epoch', async() => {
-			let [ bitmap, hashCount, count, _capacity, epoch ] = await getBitmapData(bitmapInstance);
+			let [ bitmap, hashCount, count, _capacity, epoch ] = await getBitmapData(subAccInstance);
 			assert.equal(1, epoch, "current epoch is 1"); 
 		});
 
 		it('Checking the bitmap current capacity', async() => {
-			let [ bitmap, hashCount, count, _capacity, epoch ] = await getBitmapData(bitmapInstance);
+			let [ bitmap, hashCount, count, _capacity, epoch ] = await getBitmapData(subAccInstance);
 			assert.equal(11, count, "current capacity is 11"); 
 		}); 
 
 		it('Checking the bitmap capacity', async() => {
-			let [ bitmap, hashCount, count, _capacity, epoch ] = await getBitmapData(bitmapInstance);
+			let [ bitmap, hashCount, count, _capacity, epoch ] = await getBitmapData(subAccInstance);
 			assert.equal(capacity, _capacity, "capacity is the same as initially initiated"); 
 		}); 
 	});
@@ -186,7 +186,7 @@ describe("DID Registry", function() {
 
 		it('Issuer generates a credential to the user', async() => {
 			// an issuer requests the current epoch from the bitmap contract
-			let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
+			let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(subAccInstance); 
 			// then use this epoch ID to include into credential 
 			[ credential, credentialHash, sig ] = await generateCredential('some claim', holder, issuer, "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", epoch.toNumber());
 			// convert the credential to a prime 
@@ -211,9 +211,9 @@ describe("DID Registry", function() {
 		it('Verifier retrieving the bitmap using provided epoch ID and verifies inclusion', async() => {
 			// if currentEpoch == epoch 
 			// verifier gets the latest data from SC 
-			let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(bitmapInstance); 
+			let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance); 
 			// then get the latest bitmap and check inclusion 
-			await checkInclusionBitmap(bitmapInstance, currentBitmap, hashCount, credentialPrime).then((result) => {
+			await checkInclusionBitmap(subAccInstance, currentBitmap, hashCount, credentialPrime).then((result) => {
 				// the credential has not been revoked, thus verification pass
 				assert.isFalse(result, "the credential is not in bitmap"); 
 			}); 
@@ -238,7 +238,7 @@ describe("DID Registry", function() {
 
 		it('Issuer generates a credential to the user', async() => {
 			// an issuer requests the current epoch from the bitmap contract
-			let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
+			let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(subAccInstance); 
 			// then use this epoch ID to include into credential 
 			[ credential, credentialHash, sig ] = await generateCredential('some other claim', holder, issuer, "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", epoch.toNumber());
 			// convert the credential to a prime 
@@ -254,7 +254,7 @@ describe("DID Registry", function() {
 		}); 
 
 		it('Adding more credentials to the bitmap', async() => {
-			let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
+			let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(subAccInstance); 
 			let inclusionSet = [ 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 
 								 'al', 'am', 'an', 'ao', 'ap', 'aq', 'ar', 'as', 'at', 'au', 'av', 'aw', 'ax', 'ay', 'az',
 								 'bl', 'bm', 'bn', 'bo', 'bp', 'bq', 'br', 'bs', 'bt', 'bu', 'bv', 'bw', 'bx', 'by', 'bz',
@@ -270,15 +270,15 @@ describe("DID Registry", function() {
 				// imitate user's storage of credentials 
 				credentials.push([ credentialHash, credentialPrime ]); 
 				// send to update bitmap 
-				await addToBitmap(bitmapInstance, accInstance, credentialPrime); 
+				await addToBitmap(subAccInstance, accInstance, credentialPrime); 
 			}
 
 			// assume credential and prime was stored by the user
 			// retrieve it from local storage to check the inclusion
 			let [ xCred, xPrime ] = credentials[inclusionSet.length - 1]; 
 			// get latest bitmap, epoch 2
-			[ bitmap, hashCount, count, capacity, epoch ]  = await getBitmapData(bitmapInstance);  
-			await checkInclusionBitmap(bitmapInstance, bitmap, hashCount, xPrime).then((result) => {
+			[ bitmap, hashCount, count, capacity, epoch ]  = await getBitmapData(subAccInstance);  
+			await checkInclusionBitmap(subAccInstance, bitmap, hashCount, xPrime).then((result) => {
 				assert.isTrue(result, "the credential is in bitmap"); 
 			});
 		});
@@ -304,13 +304,13 @@ describe("DID Registry", function() {
 		it('Verifier retrieving the bitmap from mapping and verify credential exclusion', async() => {
 			// if currentEpoch != epoch 
 			// verifier gets the latest data from SC 
-			let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(bitmapInstance);
+			let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance);
 			let result = await getStaticAccData(accInstance, epoch); 
 			pastBitmap = result[0]; 
 			pastAcc = result[1]; 
 
 			// check the inclusion of provided credential prime with retrieved bitmap
-			await checkInclusionBitmap(bitmapInstance, pastBitmap, hashCount, credentialPrime).then((result) => {
+			await checkInclusionBitmap(subAccInstance, pastBitmap, hashCount, credentialPrime).then((result) => {
 				// the credential has not been revoked 
 				assert.isFalse(result, "the credential is not in bitmap"); 
 			});
@@ -331,13 +331,13 @@ describe("DID Registry", function() {
 
 		it('Verifier checks exclusion in each subsequent epoch bitmaps and check its inclusion in global accumulator', async() => {
 			// verifier gets the latest data from SC 
-			let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(bitmapInstance);
+			let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance);
 
 			for (let i = epoch + 1; i < currentEpoch.toNumber() + 1; i++) {
 				if (i != currentEpoch) {
 					let [ pastBitmap, pastAcc ] = await getStaticAccData(accInstance, i); 
 					// check the inclusion of provided credential prime with retrieved bitmap
-					await checkInclusionBitmap(bitmapInstance, pastBitmap, hashCount, credentialPrime).then((result) => {
+					await checkInclusionBitmap(subAccInstance, pastBitmap, hashCount, credentialPrime).then((result) => {
 						assert.isFalse(result, "credential is not in subsequent bitmap");
 					});
 					// check the inclusion of bitmap in the global accumulator 
@@ -348,8 +348,8 @@ describe("DID Registry", function() {
 			}
 
 			// check the inclusion of credential in the current ongoing bitmap 
-			[ bitmap, hashCount, count, capacity, epoch ]  = await getBitmapData(bitmapInstance);  
-			await checkInclusionBitmap(bitmapInstance, bitmap, hashCount, credentialPrime).then((result) => {
+			[ bitmap, hashCount, count, capacity, epoch ]  = await getBitmapData(subAccInstance);  
+			await checkInclusionBitmap(subAccInstance, bitmap, hashCount, credentialPrime).then((result) => {
 				assert.isFalse(result, "credential is not subsequent bitmap");
 			});
 		}); 

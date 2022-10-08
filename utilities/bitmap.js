@@ -20,8 +20,13 @@ async function addToBitmap(bitmapInstance, accInstance, element) {
     // converts prime number to hex string 
     let elementHex = "0x" + element.toString(16); 
 
+    // console.log("count:", count.toNumber());
+    // console.log("capacity", capacity.toNumber()); 
+    // console.log("epoch", epoch.toNumber()); 
+
     // capacity reached, current data is packed and new epoch starts
     if (count.toNumber() + 10 == capacity.toNumber()) {
+        // console.log("created new bitmap...")
         // packs current epoch primes into static accumulator x 
         let staticAcc = endEpoch(); // acc is prime 
         // updated global accumulator and static acc hex 
@@ -75,7 +80,7 @@ async function checkInclusionGlobal(accInstance, x, epoch) {
     let x_product = products[epoch - 1]; ; 
     // witness for acc x 
     let w = bigInt(g).modPow(x_product, n); 
-    // verify witness 
+    // verify witness, true if w == current acc
     return (bigInt(w).modPow(x, n)).equals(currentAcc); 
 }
 

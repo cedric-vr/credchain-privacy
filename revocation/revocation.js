@@ -8,28 +8,31 @@ const { add, genMemWit, genNonMemWit, verMem, verNonMem, generatePrimes, hashToP
 async function revoke(credential, subAccInstance, accInstance) {
     // credential is represented by a prime and stored at the local device of user, computed once the credential issued
     // issuer does not know prime, so it is computed before revocation 
-    let credentialPrime = hashToPrime(credential, 128, 0n); 
+    let [ credentialPrime, nonce ] = hashToPrime(credential, 128, 0n); 
     // when issuer revokes a credential, it is always added to the bitmap, issuer does not know which one 
-    addToBitmap(subAccInstance, accInstance, credentialPrime); 
+    await addToBitmap(subAccInstance, accInstance, credentialPrime); 
 }
 
 
 // verifier function 
 async function verify(credential, epoch, subAccInstance, accInstance) {
     let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance); 
-	let credentialPrime = hashToPrime(credential, 128, 0n); 
+	let [ credentialPrime, nonce ] = hashToPrime(credential, 128, 0n); 
 
     // if currentEpoch == epoch 
     if (currentEpoch.toNumber() == epoch) {
         // only check the inclusion in the current bitmap 
-        return checkInclusionBitmap(subAccInstance, currentBitmap, hashCount, credentialPrime); 
+        return checkInclusionBitmap(subAccInstance, currentBitmap, hashCount, credentialPrime).then((result) => {
+            // the credential has been revoked 
+            if (result == true) { return false; } 
+        });
     }
     // if currentEpoch != epoch 
     else {
         // retrieve bitmap and corresponding staticAcc based on provided epoch
-        let [ pastBitmap, pastStaticAcc ] = await getStaticAccData(subAccInstance, epoch); 
+        let [ pastBitmap, pastStaticAcc ] = await getStaticAccData(accInstance, epoch); 
+
         // check the inclusion of provided credential with retrieved bitmap
-		
         await checkInclusionBitmap(subAccInstance, pastBitmap, hashCount, credentialPrime).then((result) => {
             // the credential has been revoked 
             if (result == true) { return false; } 
@@ -62,7 +65,7 @@ async function verify(credential, epoch, subAccInstance, accInstance) {
                 // if previous returns true, the bitmap is part of global accumulator and thus history 
             }
             // check the current bitmap separately since it does not have corresponding static acc yet 
-            [ currentBitmap, hashCount, count, capacity, epoch ]  = await getBitmapData(bitmapInstance); 
+            [ currentBitmap, hashCount, count, capacity, epoch ]  = await getBitmapData(subAccInstance); 
             // check the inclusion of the credential in current bitmap 
             await checkInclusionBitmap(subAccInstance, currentBitmap, hashCount, credentialPrime).then((result) => {
                 // the credential has been revoked 
