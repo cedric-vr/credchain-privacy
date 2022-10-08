@@ -80,6 +80,7 @@ contract SubAccumulator {
     function updateEpoch() public {
         // check that the epoch actually ended 
         require(filter.currentCount + 10 == filter.capacity, "capacity has not been reached");
+        filter.currentCount = 0; 
         filter.currentEpoch++; 
     }
    

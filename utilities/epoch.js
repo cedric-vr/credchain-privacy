@@ -5,9 +5,9 @@ const { gen, add, genMemWit, genNonMemWit, verMem, verNonMem, hashToPrime } = re
 
 // for testing, keep the array of primes for each epoch here 
 // otherwise, we can use decentralisede storage to store it 
-let epochPrimes = []; 
+// let epochPrimes = []; 
 
-// let epochPrimes = [ 73, 11, 59, 3, 7 ]
+let epochPrimes = [ 73, 11, 59, 3, 7 ]
 
 // let epochWitnes = []; 
 
