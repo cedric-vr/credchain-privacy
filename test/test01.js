@@ -5,6 +5,7 @@ const { generateCredential } = require("../utilities/credential.js");
 const { gen, hashToPrime } = require("../utilities/accumulator.js"); 
 const { initBitmap, addToBitmap, getBitmapData, getStaticAccData, checkInclusionBitmap, checkInclusionGlobal } = require("../utilities/bitmap.js"); 
 const { storeEpochPrimes } = require("../utilities/epoch.js");
+const { emptyProducts, emptyStaticAccData } = require("../utilities/product"); 
 
 // using the following approach for testing: 
 // https://hardhat.org/hardhat-runner/docs/other-guides/truffle-testing
@@ -76,6 +77,10 @@ describe("DID Registry", function() {
 
 			// calculate how many hash function needed and update in contract
 			await initBitmap(subAccInstance, capacity); 
+
+			// clean up from previous tests 
+			emptyProducts();
+			emptyStaticAccData(); 
 		});
 
 		it('Deploying and generating global accumulator', async() => {
@@ -305,11 +310,15 @@ describe("DID Registry", function() {
 			// if currentEpoch != epoch 
 			// verifier gets the latest data from SC 
 			let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance);
+
+			// console.log("current epoch:", currentEpoch); 
+			// console.log("epoch", epoch); 
+			
 			let result = await getStaticAccData(accInstance, epoch); 
 			pastBitmap = result[0]; 
 			pastAcc = result[1]; 
 
-			// check the inclusion of provided credential prime with retrieved bitmap
+			// check the inclusion of provided credential prime with retrieved bitmap under epoch 5
 			await checkInclusionBitmap(subAccInstance, pastBitmap, hashCount, credentialPrime).then((result) => {
 				// the credential has not been revoked 
 				assert.isFalse(result, "the credential is not in bitmap"); 

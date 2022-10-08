@@ -5,6 +5,7 @@ const { generateCredential } = require("../utilities/credential.js");
 const { gen, hashToPrime } = require("../utilities/accumulator.js"); 
 const { initBitmap, getBitmapData, getStaticAccData, checkInclusionBitmap } = require("../utilities/bitmap.js"); 
 
+const { emptyProducts, emptyStaticAccData } = require("../utilities/product"); 
 const { revoke, verify } = require("../revocation/revocation"); 
 
 // using the following approach for testing: 
@@ -88,6 +89,9 @@ describe("Testing revocation across different epoch", function() {
 
 			// calculate how many hash function needed and update in contract
 			await initBitmap(subAccInstance, capacity); 
+			// clean up from previous tests 
+			emptyProducts();
+			emptyStaticAccData(); 
 		});
 
 		it('Deploying and generating global accumulator', async() => {
@@ -148,8 +152,6 @@ describe("Testing revocation across different epoch", function() {
             let credentialsToRevoke = credentials.slice(0, 40); 
 
             for (let [cred, prime] of credentialsToRevoke) {
-                // let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance); 
-                // console.log(currentEpoch.toNumber(), cred);
                 await revoke(cred, subAccInstance, accInstance); 
             }
 
@@ -166,24 +168,20 @@ describe("Testing revocation across different epoch", function() {
             let [ invalidCred, invalidPrime ] = credentials[20]; 
             // the credential was revoked during epoch #2
             // get the latest bitmap based on epoch 
-            let [ bitmap_b, acc_b ] = await getStaticAccData(accInstance, 2); 
+            let [ bitmap_b, acc_b ] = await getStaticAccData(accInstance, 3); 
 			// check the inclusion of provided credential prime with retrieved bitmap
 			await checkInclusionBitmap(subAccInstance, bitmap_b, hashCount, invalidPrime).then((result) => {
-				assert.isFalse(result, "the credential was revoked"); 
+				assert.isTrue(result, "the credential was revoked"); 
 			});
         });
     });
 
     describe("Verification", function() {
         it('Verifier verifies a valid credential', async() => {
-            // let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance); 
-            // console.log("current epoch", currentEpoch.toNumber());
-            // console.log("cred epoch", epoch_a); 
-            
             // verifier receives from the user credential hash and epoch when it was issued 
             // the credentialHash_a is the last element of the inclusion set and was not revoked
             await verify(credentialHash_a, epoch_a, subAccInstance, accInstance).then((result) => {
-                assert.isTrue(result, "the credential is valid"); 
+				assert.isTrue(result, "the credential is valid"); 
             });
         });
 

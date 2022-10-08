@@ -5,6 +5,7 @@ const { generateCredential } = require("../utilities/credential.js");
 const { gen, hashToPrime } = require("../utilities/accumulator.js"); 
 const { initBitmap, getBitmapData, checkInclusionBitmap } = require("../utilities/bitmap.js"); 
 
+const { emptyProducts, emptyStaticAccData } = require("../utilities/product"); 
 const { revoke, verify } = require("../revocation/revocation"); 
 
 // using the following approach for testing: 
@@ -88,6 +89,10 @@ describe("Testing using revocation functionality", function() {
 
 			// calculate how many hash function needed and update in contract
 			await initBitmap(subAccInstance, capacity); 
+
+			// clean up from previous tests 
+			emptyProducts();
+			emptyStaticAccData(); 
 		});
 
 		it('Deploying and generating global accumulator', async() => {
@@ -175,13 +180,9 @@ describe("Testing using revocation functionality", function() {
         it('Verifier verifies a valid credential', async() => {
             // verifier receives from the user credential hash and epoch when it was issued 
             // the credentialHash_a is the last element of the inclusion set and was not revoked
-
-            let res = await verify(credentialHash_a, epoch_a, subAccInstance, accInstance);
-            console.log(res); 
-
-            // await verify(credentialHash_a, epoch_a, subAccInstance, accInstance).then((result) => {
-            //     assert.isTrue(result, "the credential is valid"); 
-            // });
+            await verify(credentialHash_a, epoch_a, subAccInstance, accInstance).then((result) => {
+                assert.isTrue(result, "the credential is valid"); 
+            });
         });
 
         it('Verifier verifies an invalid credential', async() => {

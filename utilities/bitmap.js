@@ -77,7 +77,7 @@ async function checkInclusionGlobal(accInstance, x, epoch) {
     let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
     // let data = readStaticAccData();             // get the data from storage 
     let products = readStaticAccProducts(); 
-    let x_product = products[epoch - 1]; ; 
+    let x_product = products[epoch - 1]; 
     // witness for acc x 
     let w = bigInt(g).modPow(x_product, n); 
     // verify witness, true if w == current acc
@@ -101,4 +101,4 @@ async function getStaticAccData(accInstance, id) {
 }
 
 
-module.exports = { initBitmap, addToBitmap, getBitmapData, getStaticAccData, checkInclusionBitmap, checkInclusionGlobal }
+module.exports = { initBitmap, addToBitmap, getBitmapData, getStaticAccData, getGlobalAccData, checkInclusionBitmap, checkInclusionGlobal }

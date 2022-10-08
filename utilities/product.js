@@ -38,8 +38,16 @@ function updateProducts(new_x) {
         product = bigInt(product).multiply(staticAccData[i].acc);
         products[i] = bigInt(products[i]).multiply(new_x); 
     }
+
     products.push(product); 
 }
 
+function emptyProducts() {
+    products = []; 
+}
 
-module.exports = { storeStaticAccData, readStaticAccData, readStaticAccProducts, updateProducts }
+function emptyStaticAccData() {
+    staticAccData = []; 
+}
+
+module.exports = { storeStaticAccData, readStaticAccData, emptyStaticAccData, readStaticAccProducts, updateProducts, emptyProducts }
