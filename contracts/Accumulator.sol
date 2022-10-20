@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./IssuerRegistry.sol"; 
 import "./SubAccumulator.sol";
+import "./BytesLib.sol";
 
 contract Accumulator {
 
@@ -12,6 +13,8 @@ contract Accumulator {
     // because it is a large prime, the collision is negligable 
     // when credential issued, it is mapped to a prime 
 
+    using BytesLib for bytes;
+
     bytes globalAcc; 
     bytes n;
     bytes g; 
@@ -19,19 +22,11 @@ contract Accumulator {
     struct Bitmap {
         uint256 bitmap;         // bitmap value 
         bytes staticAcc;        // static accumulator of bitmap 
-        // bytes product; 
     }
 
     mapping(uint256 => Bitmap) bitmaps; 
 
-    // uint256 current;        // keep track of how many bitmaps in the mapping 
-
-    // id => bitmap 
-    // mapping(uint256 => uint256) bitmaps; 
-    // id => bitmap => static acc 
-    // mapping(uint256 => mapping(uint256 => bytes)) bitmaps; 
     uint256 numBitmaps; 
-
     address issuerRegistryAddress; 
     address subAccumulatorAddress; 
 
@@ -68,27 +63,56 @@ contract Accumulator {
         // get the current epoch value 
         SubAccumulator acc = SubAccumulator(subAccumulatorAddress); 
         uint256 epoch = acc.getEpoch(); 
-
         bitmaps[epoch].bitmap = _bitmap;        // bitmap 
         bitmaps[epoch].staticAcc = _staticAcc;  // static accumulator
-        // bitmaps[epoch].product = _product;      // update product of accs
         globalAcc = _globalAcc;                 // global accumulator updated
         numBitmaps = epoch;  
     }
 
-    // verify credential membership in the accumulator 
-    // anyone can call this function 
-    function verMem() public {
-        // do we need an actual non-membership calulation? 
-        // can we just evaluate membership instead? 
-        // a = w^x mod n 
-        // if a == 1, then member 
-        // if a == 0, then non-member
+    // // copyright: https://github.com/oleiba/RSA-accumulator
+    // base is proof / membership witness of static acc
+    // e is prime of element verifying for 
+    function verifyElement(bytes memory base, bytes32 e) public returns (bool) {
+        // Count the loops required for base (blocks of 32 bytes)
+        uint base_length = base.length;
+        uint loops_base = (base_length + 31) / 32;
+        // Count the loops required for modulus (blocks of 32 bytes)
+        uint modulus_length = n.length;
+        uint loops_modulus = (modulus_length + 31) / 32;
+        bytes memory _modulus = n;
+
+        bytes memory p;
+        // are all of these inside the precompile now?
+        assembly {
+        // define pointer
+            p := mload(0x40)
+        // store data assembly-favouring ways
+            mstore(p, base_length)
+
+            mstore(add(p, 0x20), 0x180)  // Length of Base
+            mstore(add(p, 0x40), 0x20)  // Length of Exponent
+            mstore(add(p, 0x60), 0x180)  // Length of Modulus
+
+            for { let i := 0 } lt(i, loops_base) { i := add(1, i) } { mstore(add(add(p, 0x80), mul(32, i)), mload(add(base, mul(32, add(i, 1))))) }  // Base
+
+            mstore(add(p, 0x200), e)  // Exponent
+
+        // Add the contents of b to the array
+            for { let i := 0 } lt(i, loops_modulus) { i := add(1, i) } { mstore(add(add(p, 0x220), mul(32, i)), mload(add(_modulus, mul(32, add(i, 1))))) }  // Modulus
+
+        // call modexp precompile!
+            let success := call(sub(gas(), 2000), 0x05, 0, add(p, 0x20), 0x380, add(p, 0x20), 0x180)
+
+        // gas fiddling
+            switch success case 0 {
+                revert(0, 0)
+            }
+        // data
+            mstore(0x40, add(p, add(0x20, base_length)))
+        // o := p
+        }
+
+        return p.equal(globalAcc);
     }
-
-    // // update witness for the given credential 
-    // function UpdWit(uint256 _credential) public {
-
-    // }
 
 }

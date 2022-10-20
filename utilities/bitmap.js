@@ -5,6 +5,7 @@ const { add } = require("./accumulator.js");
 const { storeEpochPrimes, endEpoch } = require("./epoch.js");
 const { storeStaticAccData, readStaticAccProducts, updateProducts } = require("./product.js");
 
+const { storeWitness, readWitness, updateWitness } = require("./witness"); 
 
 async function initBitmap(instance, capacity) {
     // get the hash count based on capacity 
@@ -22,7 +23,7 @@ async function addToBitmap(bitmapInstance, accInstance, element) {
 
     // console.log("count:", count.toNumber());
     // console.log("capacity", capacity.toNumber()); 
-    // console.log("epoch", epoch.toNumber()); 
+    // console.log("epoch", epoch.toNumber(), "; element", element); 
 
     // capacity reached, current data is packed and new epoch starts
     if (count.toNumber() + 10 == capacity.toNumber()) {
@@ -35,6 +36,19 @@ async function addToBitmap(bitmapInstance, accInstance, element) {
         storeStaticAccData(epoch.toNumber(), staticAcc.toString(), 1); 
         // then update products data for each element 
         updateProducts(staticAcc);
+
+        // get n, g values 
+        let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
+        // get the current product for the x 
+        let products = readStaticAccProducts(); 
+        let x_product = products[epoch - 1]; 
+        // calculate w 
+        let w = bigInt(g).modPow(x_product, n); 
+        // store new witness 
+        storeWitness(w); 
+        // update witnesses 
+        updateWitness(n, g); 
+
         // update data inside the contract 
         await accInstance.update(bitmap, staticAccHex, globalAccHex); 
         // reset bitmap 
@@ -73,14 +87,22 @@ async function addToGlobal(accInstance, x) {
 }
 
 // check inclusion of x in global acc 
+// async function checkInclusionGlobal(accInstance, x, epoch) {
+//     let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
+//     // this part can be replaced by quering storage for witness of x
+//     // and avoid the computation of the witness 
+//     let products = readStaticAccProducts(); 
+//     let x_product = products[epoch - 1]; 
+//     // witness for acc x 
+//     let w = bigInt(g).modPow(x_product, n); 
+//     // verify witness, true if w == current acc
+//     return (bigInt(w).modPow(x, n)).equals(currentAcc); 
+// }
+
 async function checkInclusionGlobal(accInstance, x, epoch) {
     let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
-    // let data = readStaticAccData();             // get the data from storage 
-    let products = readStaticAccProducts(); 
-    let x_product = products[epoch - 1]; 
-    // witness for acc x 
-    let w = bigInt(g).modPow(x_product, n); 
-    // verify witness, true if w == current acc
+    let data = readWitness(); 
+    let w = data[epoch - 1]; 
     return (bigInt(w).modPow(x, n)).equals(currentAcc); 
 }
 

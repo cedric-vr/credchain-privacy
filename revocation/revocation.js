@@ -1,6 +1,7 @@
 
-const { addToBitmap, getBitmapData, getStaticAccData, checkInclusionBitmap, checkInclusionGlobal } = require("../utilities/bitmap");
+const { addToBitmap, getBitmapData, getStaticAccData, checkInclusionBitmap, checkInclusionGlobal, getGlobalAccData } = require("../utilities/bitmap");
 const { hashToPrime } = require("../utilities/accumulator");
+
 
 // issuer function 
 async function revoke(credential, subAccInstance, accInstance) {
@@ -38,6 +39,9 @@ async function verify(credential, epoch, subAccInstance, accInstance) {
         // check the inclusion of the static accumulator in the global accumulator to verify its reliability 
         let checkStaticAcc = await checkInclusionGlobal(accInstance, pastStaticAcc, epoch); 
 
+        // let checkStaticAcc_ = await checkInclusionGlobal_storage(accInstance, pastStaticAcc, epoch); 
+        // console.log(checkStaticAcc_); 
+
         // the bitmap is not part of global accumulator, thus can't trust provided credential and corresponding acc
         if (checkStaticAcc === false) { return false; } 
 
@@ -52,6 +56,8 @@ async function verify(credential, epoch, subAccInstance, accInstance) {
             // if the inclusion check return true, then credential has been revoked in subsequent epoch i 
             if (checkSubsequent === true) { return false; }
             
+            // alternative on-chain verifiaction goes here instead of next few lines 
+
             // if the return false, the credential was not included in bitmap i, verify the correctness of that bitmap 
             let checkSubsequentAcc = await checkInclusionGlobal(accInstance, pastStaticAcc_i, i)
             // if yields false, then bitmap value was not part of the history and possibly forged 
@@ -71,5 +77,29 @@ async function verify(credential, epoch, subAccInstance, accInstance) {
     // all the checks passed and credential is valid
     return true; 
 }
+
+
+// const { readStaticAccData, readStaticAccProducts } = require("../utilities/product"); 
+// var bigInt = require("big-integer");
+// var util = require('ethereumjs-util');
+
+// alternative on-chain verification process 
+// let arr = readStaticAccData().map(a => a.acc);
+// // item as string 
+// let pastStaticAcc_i_str = bigInt(pastStaticAcc_i).toString(); 
+// // find idex of a static acc for retrieving the product 
+// let index = arr.indexOf(pastStaticAcc_i_str);
+// // get the product of the item 
+// let product = readStaticAccProducts()[index];     
+// // get data about accumulator 
+// let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
+// // witness for static acc in question 
+// let w = bigInt(bigInt(g).modPow(product, n)).toString(); 
+
+// // currently return error because e expects to be bytes32, not bytes memory 
+// // possible to modify the onchain code to accept bytes memory instead 
+// let checkSubsequentAcc = await accInstance.verifyElement.call(w, pastStaticAcc_i_str);
+// console.log("on-chain verification returned:", checkSubsequentAcc); 
+
 
 module.exports = { revoke, verify }
