@@ -7,6 +7,8 @@ const { initBitmap, addToBitmap, getBitmapData, getStaticAccData, checkInclusion
 const { storeEpochPrimes } = require("../utilities/epoch.js");
 const { emptyProducts, emptyStaticAccData } = require("../utilities/product"); 
 
+const { revoke, verify } = require("../revocation/revocation"); 
+
 // using the following approach for testing: 
 // https://hardhat.org/hardhat-runner/docs/other-guides/truffle-testing
 
@@ -211,6 +213,17 @@ describe("DID Registry", function() {
 			epoch = credential.epoch; 
 			credentialPrime = hashToPrime(credentialHash, 128, 0n)[0]; 
 			assert.equal(1, epoch, "epoch is 1"); 
+		}); 
+
+		it('Verifying valid credential exclusion during issuance epoch', async() => {
+			var startTime = performance.now();
+			let verification = await verify(credentialHash, epoch, subAccInstance, accInstance); 
+			var endTime = performance.now();
+			console.log(`Call to verification of invalid credential took ${endTime - startTime} milliseconds`)
+			
+			await verify(credentialHash, epoch, subAccInstance, accInstance).then((result) => {
+				assert.isTrue(result, "the credential is valid"); 
+            });
 		}); 
 
 		it('Verifier retrieving the bitmap using provided epoch ID and verifies inclusion', async() => {

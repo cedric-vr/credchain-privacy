@@ -4,6 +4,17 @@ var bigInt = require("big-integer");
 let staticAccData = [];
 let products = []; 
 
+let product = 1n; 
+
+function updateProduct(x) {
+    product = bigInt(product).multiply(x); 
+}
+
+function getProduct() {
+    return product; 
+}
+
+
 // assume this is to access distributes storage, e.g., IPFS 
 function storeStaticAccData(epoch, acc, product) {
     // staticAccData[epoch] = [bitmap, acc, accHex, product];
@@ -27,6 +38,15 @@ function readStaticAccProducts() {
     return products; 
 }
 
+function getStaticAccInRange(from, to) {
+    let range = []
+    for (let i = from; i < to; i++) {
+        range.push(staticAccData[i]); 
+        // console.log(p); 
+    }
+    return range; 
+}   
+
 function updateProducts(new_x) {
     // product of other accumulators 
     let product = 1;
@@ -39,6 +59,8 @@ function updateProducts(new_x) {
         products[i] = bigInt(products[i]).multiply(new_x); 
     }
 
+    // console.log("product", product);
+
     products.push(product); 
 }
 
@@ -50,4 +72,4 @@ function emptyStaticAccData() {
     staticAccData = []; 
 }
 
-module.exports = { storeStaticAccData, readStaticAccData, emptyStaticAccData, readStaticAccProducts, updateProducts, emptyProducts }
+module.exports = { getStaticAccInRange, updateProduct, getProduct, storeStaticAccData, readStaticAccData, emptyStaticAccData, readStaticAccProducts, updateProducts, emptyProducts }

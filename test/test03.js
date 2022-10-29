@@ -35,6 +35,8 @@ describe("Testing revocation across different epoch", function() {
 	let subAccInstance; 
 	let accInstance; 
 
+	let inclusionSet; 
+
     // user / holder of credential_a provides to verifier 
     // credential a is valid 
     let epoch_a;                    // when credential was issued 
@@ -110,7 +112,7 @@ describe("Testing revocation across different epoch", function() {
     describe("Issuance", function() {
         it('Issuing large number of credentials', async() => {
             let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance);
-			let inclusionSet = [ 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 
+			inclusionSet = [ 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 
 								 'al', 'am', 'an', 'ao', 'ap', 'aq', 'ar', 'as', 'at', 'au', 'av', 'aw', 'ax', 'ay', 'az',
 								 'bl', 'bm', 'bn', 'bo', 'bp', 'bq', 'br', 'bs', 'bt', 'bu', 'bv', 'bw', 'bx', 'by', 'bz',
 								 'cl', 'cm', 'cn', 'co', 'cp', 'cq', 'cr', 'cs', 'ct', 'cu', 'cv', 'cw', 'cx', 'cy', 'cz',
@@ -123,6 +125,9 @@ describe("Testing revocation across different epoch", function() {
 			for (let item of inclusionSet) {
 				// credential hash for each item in set 
 				let [ credential, credentialHash, sig ] = await generateCredential(item, issuer, accounts[4], "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", currentEpoch.toNumber());
+				
+				// console.log(credential); 
+				
 				// convert the credential to a prime 
 				let [credentialPrime, nonce] = hashToPrime(credentialHash, 128, 0n); 
 				// imitate user's storage of credential and corresponding prime 
@@ -180,18 +185,60 @@ describe("Testing revocation across different epoch", function() {
         it('Verifier verifies a valid credential', async() => {
             // verifier receives from the user credential hash and epoch when it was issued 
             // the credentialHash_a is the last element of the inclusion set and was not revoked
+			// var startTime = performance.now();
+			// let verification = await verify(credentialHash_a, epoch_a, subAccInstance, accInstance); 
+			// var endTime = performance.now();
+			// console.log(`Call to verification of valid credential took ${endTime - startTime} milliseconds`)
+
             await verify(credentialHash_a, epoch_a, subAccInstance, accInstance).then((result) => {
+				console.log(result)
 				assert.isTrue(result, "the credential is valid"); 
             });
         });
 
         it('Verifier verifies an invalid credential', async() => {
+			// var startTime = performance.now();
+			// let verification = await verify(credentialHash_b, epoch_b, subAccInstance, accInstance); 
+			// var endTime = performance.now();
+			// console.log(`Call to verification of invalid credential took ${endTime - startTime} milliseconds`)
+
             // verifier receives from the user credential hash and epoch when it was issued 
             // the credentialHash_b is the first element of the inclusion set and was revoked 
             await verify(credentialHash_b, epoch_b, subAccInstance, accInstance).then((result) => {
+				console.log(result)
                 assert.isFalse(result, "the credential was revoked"); 
             });
         });
     }); 
+
+	// describe('User attemps to verify during issuance epoch', function() {
+	// 	let credential;
+	// 	let credentialHash; 
+	// 	let sig;
+	// 	let epoch; 
+
+	// 	it('Credential generating', async() => {
+	// 		let claim = inclusionSet.length - 1; 
+			
+	// 		[ credential, credentialHash, sig ] = await generateCredential(claim, issuer, accounts[4], "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", currentEpoch.toNumber());
+	// 		let [credentialPrime, nonce] = hashToPrime(credentialHash, 128, 0n); 
+	// 	});
+
+	// 	it('Issuer revokes credential', async() => {
+	// 		var startTime = performance.now();
+	// 		await revoke(credentialHash, subAccInstance, accInstance); 
+	// 		var endTime = performance.now();
+	// 		console.log(`Call to revoke a credential took ${endTime - startTime} milliseconds`)
+	// 	}); 
+
+	// 	it('Verifying invalid cderential during issuance epoch', async() => {
+	// 		let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance);
+
+	// 		var startTime = performance.now();
+	// 		let verification = await verify(credentialHash, currentEpoch.toNumber(), subAccInstance, accInstance); 
+	// 		var endTime = performance.now();
+	// 		console.log(`Call to verification of invalid credential took ${endTime - startTime} milliseconds`)
+	// 	});
+	// }); 
 
 });

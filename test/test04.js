@@ -11,6 +11,8 @@ const { storeStaticAccData, readStaticAccProducts, updateProducts } = require(".
 const { emptyProducts, emptyStaticAccData } = require("../utilities/product"); 
 const { revoke, verify } = require("../revocation/revocation"); 
 
+const { performance } = require('perf_hooks');
+
 // using the following approach for testing: 
 // https://hardhat.org/hardhat-runner/docs/other-guides/truffle-testing
 
@@ -182,6 +184,13 @@ describe("Testing verification on-chain", function() {
 			// update produces with new prime 
 			update_product(revokedPrime, data, products); 
 
+			var startTime = performance.now();
+			let accHex = "0x" + bigInt(acc0).toString(16); 
+			// update latest acc in contract 
+			await accInstance.update(accHex); 
+			var endTime = performance.now();
+			console.log(`Call to update on-chain acc took ${endTime - startTime} milliseconds`)
+
 
 			let [revokedCredential_a, revokedPrime_a] = credentials[6]; 
 			// updated acc with revoked credential 
@@ -190,6 +199,13 @@ describe("Testing verification on-chain", function() {
 			data.push(revokedPrime_a); 
 			// update produces with new prime 
 			update_product(revokedPrime_a, data, products); 
+
+			var startTime = performance.now();
+			accHex = "0x" + bigInt(acc1).toString(16); 
+			// update latest acc in contract 
+			await accInstance.update(accHex); 
+			var endTime = performance.now();
+			console.log(`Call to update on-chain acc took ${endTime - startTime} milliseconds`)
 
 
 			let [revokedCredential_b, revokedPrime_b] = credentials[7]; 
@@ -200,18 +216,27 @@ describe("Testing verification on-chain", function() {
 			// update produces with new prime 
 			update_product(revokedPrime_b, data, products); 
 
+			var startTime = performance.now();
+			accHex = "0x" + bigInt(acc2).toString(16); 
+			// update latest acc in contract 
+			await accInstance.update(accHex); 
+			var endTime = performance.now();
+			console.log(`Call to update on-chain acc took ${endTime - startTime} milliseconds`)
+
 			// console.log("last acc:", acc2); 
 
+			var startTime = performance.now();
 			// assume user computes this locally 
 			// witness for cred a 
 			let w_a = bigInt(g).modPow(products[1], n); 
 			// proof that credential was revoked 
 			let proof_a = (bigInt(w_a).modPow(revokedPrime_a, n)).equals(acc2);
 			// console.log(proof_a); 
-
+			var endTime = performance.now();
+			console.log(`Call to calculate witness took ${endTime - startTime} milliseconds`)
 			
 			// now revoked new credential 
-			let [revokedCredential_c, revokedPrime_c] = credentials[7]; 
+			let [revokedCredential_c, revokedPrime_c] = credentials[8]; 
 			// updated acc with revoked credential 
 			let acc3 = add(acc2, n, revokedPrime_c); 
 			// store new revoked prime 
@@ -219,14 +244,59 @@ describe("Testing verification on-chain", function() {
 			// update produces with new prime 
 			update_product(revokedPrime_c, data, products); 
 
+
+			var startTime = performance.now();
+			accHex = "0x" + bigInt(acc3).toString(16); 
+			// update latest acc in contract 
+			await accInstance.update(accHex); 
+			var endTime = performance.now();
+			console.log(`Call to update on-chain acc took ${endTime - startTime} milliseconds`)
+
+
 			// now this is not working for cred a 
 			proof_a = (bigInt(w_a).modPow(revokedPrime_a, n)).equals(acc3);
 			console.log(proof_a);
 			
+
+			var startTime = performance.now();
 			// a updated witness 
 			w_a = bigInt(g).modPow(products[1], n); 
+			console.log(w_a); 
+			var endTime = performance.now();
+			console.log(`Call to update witness took ${endTime - startTime} milliseconds`)
+
+			var startTime = performance.now();
 			proof_a = (bigInt(w_a).modPow(revokedPrime_a, n)).equals(acc3);
 			console.log(proof_a); 
+			var endTime = performance.now();
+			console.log(`Call to verification of witness took ${endTime - startTime} milliseconds`)
+
+
+			// take part of list for revokation 
+            // let credentialsToRevoke = credentials.slice(0, 40); 
+
+            // for (let [cred, prime] of credentialsToRevoke) {
+            //     await revoke(cred, subAccInstance, accInstance); 
+            // }
+
+			let acc_prev = g; 
+			let acc_new; 
+			
+			for (let i = 0; i < 40; i++) {
+				// now revoked new credential 
+				let [revokedCredential, revokedPrime] = credentials[i]; 
+				// updated acc with revoked credential 
+				acc_new = add(acc_prev, n, revokedPrime_c); 
+				acc_prev = acc_new; 
+				// store new revoked prime 
+				data.push(revokedPrime); 
+				// update produces with new prime 
+				update_product(revokedPrime, data, products); 
+			}
+
+			// 40 cred -> 100 ms to revoke 
+
+
         });
     });
 });
