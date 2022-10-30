@@ -149,9 +149,9 @@ describe("Testing revocation across different epoch", function() {
             let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance);
             var startTime = performance.now();
             let verification = await verify(credentials[num][0], epochs[num], subAccInstance, accInstance); 
-            console.log(verification); 
+            // console.log(verification); 
             var endTime = performance.now();
-            console.log(`Verify credential issued at current: ${currentEpoch.toNumber()} | issued at: ${epochs[num]} | took: ${endTime - startTime} ms`)
+            console.log(`${verification}: Verify credential issued at current: ${currentEpoch.toNumber()} | issued at: ${epochs[num]} | took: ${endTime - startTime} ms`)
         }
 
         it('Issuing credentials, round 1', async() => {
@@ -176,9 +176,9 @@ describe("Testing revocation across different epoch", function() {
             }
         });
 
-        it('Revoke credentials, round 2', async() => {
-            await revokeCreds(20, 40); 
-        }); 
+        // it('Revoke credentials, round 2', async() => {
+        //     await revokeCreds(20, 40); 
+        // }); 
 
         it('Issuing credentials, round 3', async() => {
             await issueCreds(); 
@@ -241,47 +241,44 @@ describe("Testing revocation across different epoch", function() {
             }
         });
 
-        // it('Revoke credentials, round 7', async() => {
-        //     await revokeCreds(120, 140); 
-        // });
+        it('Revoke credentials, round 7', async() => {
+            await revokeCreds(120, 140); 
+        });
 
-        // it('Issuing credentials, round 8', async() => {
-        //     await issueCreds(); 
+        it('Issuing credentials, round 8', async() => {
+            await issueCreds(); 
 
-        //     for (let j = 0; j < credentials.length; j++) {
-        //         let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance);
-        //         // console.log("credential:", credentials[j][0], "issuance epoch:", epochs[j], "curr epoch:", currentEpoch.toNumber());
-        //     }
+            for (let j = 0; j < credentials.length; j++) {
+                let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance);
+                // console.log("credential:", credentials[j][0], "issuance epoch:", epochs[j], "curr epoch:", currentEpoch.toNumber());
+            }
+        });
 
-        //     let verification = await verify(credentials[142], epochs[142], subAccInstance, accInstance); 
-        //     console.log(verification); 
-        // });
+        it('Revoke credentials, round 8', async() => {
+            await revokeCreds(140, 160); 
+        });
 
-        // it('Revoke credentials, round 8', async() => {
-        //     await revokeCreds(140, 160); 
-        // });
+        it('Issuing credentials, round 9', async() => {
+            await issueCreds(); 
 
-        // it('Issuing credentials, round 9', async() => {
-        //     await issueCreds(); 
-
-        //     for (let j = 0; j < credentials.length; j++) {
-        //         let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance);
-        //         // console.log("credential:", credentials[j][0], "issuance epoch:", epochs[j], "curr epoch:", currentEpoch.toNumber());
-        //     }
-        // });
+            for (let j = 0; j < credentials.length; j++) {
+                let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance);
+                // console.log("credential:", credentials[j][0], "issuance epoch:", epochs[j], "curr epoch:", currentEpoch.toNumber());
+            }
+        });
 
         // it('Revoke credentials, round 9', async() => {
         //     await revokeCreds(160, 180); 
         // });
 
-        // it('Issuing credentials, round 10', async() => {
-        //     await issueCreds(); 
+        it('Issuing credentials, round 10', async() => {
+            await issueCreds(); 
 
-        //     for (let j = 0; j < credentials.length; j++) {
-        //         let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance);
-        //         // console.log("credential:", credentials[j][0], "issuance epoch:", epochs[j], "curr epoch:", currentEpoch.toNumber());
-        //     }
-        // });
+            for (let j = 0; j < credentials.length; j++) {
+                let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance);
+                // console.log("credential:", credentials[j][0], "issuance epoch:", epochs[j], "curr epoch:", currentEpoch.toNumber());
+            }
+        });
 
         // it('Revoke credentials, round 10', async() => {
         //     await revokeCreds(180, 200); 
@@ -302,16 +299,13 @@ describe("Testing revocation across different epoch", function() {
             await verifyCred(110);
             await verifyCred(120);
             await verifyCred(130);
-            // await verifyCred(141);
-            // await verifyCred(150);
-            // await verifyCred(160);
-            // await verifyCred(170);
-            // await verifyCred(180);
-            // await verifyCred(190);
+            await verifyCred(140);
+            await verifyCred(150);
+            await verifyCred(160);
+            await verifyCred(170);
+            await verifyCred(180);
+            await verifyCred(190);
             // await verifyCred(200);            
         });
-
-
-
     }); 
 });

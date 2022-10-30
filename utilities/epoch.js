@@ -34,7 +34,7 @@ function emptyEpochPrimes() {
     epochPrimes = [];
 }
 
-function endEpoch() {
+function _endEpoch() {
     let primes = getEpochPrimes(); 
     let [n, g] = gen();
     let acc = g; 
@@ -47,27 +47,27 @@ function endEpoch() {
     return acc; 
 }
 
-// function endEpoch(_product) {
-//     // let primes = getEpochPrimes(); 
-//     let [n, g] = gen();
-//     // let acc = g; 
+function endEpoch(_product) {
+    // let primes = getEpochPrimes(); 
+    let [n, g] = gen();
+    // let acc = g; 
 
-//     // let product = primes.reduce((a, b) => a * b);
-//     let acc = bigInt(g).modPow(_product, n); 
+    // let product = primes.reduce((a, b) => a * b);
+    let acc = bigInt(g).modPow(_product, n); 
 
-//     // console.log("with product\n", accUpd); 
+    // console.log("with product\n", accUpd); 
 
-//     // add all the primes in storage to the accumulator 
-//     // for (let p = 0; p < primes.length; p++) {
-//     //     acc = add(acc, n, primes[p]); 
-//     // }
+    // add all the primes in storage to the accumulator 
+    // for (let p = 0; p < primes.length; p++) {
+    //     acc = add(acc, n, primes[p]); 
+    // }
 
-//     // console.log("with add\n", acc); 
+    // console.log("with add\n", acc); 
 
-//     // re-establish epoch primes to empty?
-//     // emptyEpochPrimes(); 
-//     product = 1n; // reset product 
-//     return acc; 
-// }
+    // re-establish epoch primes to empty?
+    // emptyEpochPrimes(); 
+    product = 1n; // reset product 
+    return acc; 
+}
 
 module.exports = { getEpochPrimes, storeEpochPrimes, endEpoch, updateEpochProduct, getEpochProduct }

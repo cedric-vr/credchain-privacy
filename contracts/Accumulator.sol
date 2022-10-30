@@ -17,6 +17,7 @@ contract Accumulator {
     bytes g; 
 
     struct Bitmap {
+        bool lock;              // lock the bitmap once its data added, so no one can change it 
         uint256 bitmap;         // bitmap value 
         bytes staticAcc;        // static accumulator of bitmap 
         bytes txHash;           // record the tx hash where witness and global acc data can be found? 
@@ -89,6 +90,7 @@ contract Accumulator {
         // emit accValue(_globalAcc); 
     }
 
+    // should include lock function, lock any tx updates once its been updated 
     function updateTx(bytes memory _txHash, uint256 _id) public {
         bitmaps[_id].txHash = _txHash; 
     }

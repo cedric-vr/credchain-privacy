@@ -19,103 +19,104 @@ async function initBitmap(instance, capacity) {
     await instance.updateHashCount(hashCount, capacity); 
 }
 
-// async function addToBitmap(bitmapInstance, accInstance, element) {
-//     let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
+async function _addToBitmap(bitmapInstance, accInstance, element) {
+    let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
 
-//     // when new element revoked, update overall epoch product, which is p * p * ... p
-//     // where p is each element being revoked 
-//     updateEpochProduct(element); 
+    // when new element revoked, update overall epoch product, which is p * p * ... p
+    // where p is each element being revoked 
+    updateEpochProduct(element); 
 
-//     // add prime to the array, ideally this would be the distributed storage 
-//     // storeEpochPrimes(element); // credential 
-//     // converts prime number to hex string 
-//     let elementHex = "0x" + element.toString(16); 
+    // add prime to the array, ideally this would be the distributed storage 
+    // storeEpochPrimes(element); // credential 
+    // converts prime number to hex string 
+    let elementHex = "0x" + element.toString(16); 
 
-//     // console.log("count:", count.toNumber());
-//     // console.log("capacity", capacity.toNumber()); 
-//     // console.log("epoch", epoch.toNumber(), "; element", element); 
+    // console.log("count:", count.toNumber());
+    // console.log("capacity", capacity.toNumber()); 
+    // console.log("epoch", epoch.toNumber(), "; element", element); 
 
-//     // capacity reached, current data is packed and new epoch starts
-//     if (count.toNumber() + 10 == capacity.toNumber()) {
-//         // get current product number
-//         let epochProduct = getEpochProduct(); 
+    // capacity reached, current data is packed and new epoch starts
+    if (count.toNumber() + 10 == capacity.toNumber()) {
+        // get current product number
+        let epochProduct = getEpochProduct(); 
 
-//         var startTime = performance.now();
-//         // packs current epoch primes into static accumulator x 
-//         let staticAcc = endEpoch(epochProduct); // acc is prime 
-//         var endTime = performance.now();
-//         // console.log(`       > 1 Call to endEpoch(epochPrime) took ${endTime - startTime} ms`)
+        var startTime = performance.now();
+        // packs current epoch primes into static accumulator x 
+        let staticAcc = endEpoch(epochProduct); // acc is prime 
+        var endTime = performance.now();
+        // console.log(`       > 1 Call to endEpoch(epochPrime) took ${endTime - startTime} ms`)
 
-//         // add staticAcc to Acc
-//         var startTime = performance.now();
-//         let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
-//         var endTime = performance.now();
-//         // console.log(`       > 2 Call to getGlobalAccData() took ${endTime - startTime} ms`)
+        // add staticAcc to Acc
+        var startTime = performance.now();
+        let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
+        var endTime = performance.now();
+        // console.log(`       > 2 Call to getGlobalAccData() took ${endTime - startTime} ms`)
 
-//         var startTime = performance.now();
-//         // add new element to the current accumulator - bigInt(acc).modPow(x, n), acc^staticAcc mod n 
-//         let accNew = add(currentAcc, n, staticAcc); // x is static accumulator 
-//         var endTime = performance.now();
-//         // console.log(`       > 3 Call to add(currentAcc, n, staticAcc) took ${endTime - startTime} ms`)
+        var startTime = performance.now();
+        // add new element to the current accumulator - bigInt(acc).modPow(x, n), acc^staticAcc mod n 
+        let accNew = add(currentAcc, n, staticAcc); // x is static accumulator 
+        var endTime = performance.now();
+        // console.log(`       > 3 Call to add(currentAcc, n, staticAcc) took ${endTime - startTime} ms`)
 
-//         var startTime = performance.now();
-//         storeStaticAccData(epoch.toNumber(), staticAcc.toString(), 1); 
-//         updateProducts(staticAcc); 
-//         var endTime = performance.now();
-//         // console.log(`       > 3.1 Call to updateProducts(staticAcc) took ${endTime - startTime} ms`)
+        var startTime = performance.now();
+        storeStaticAccData(epoch.toNumber(), staticAcc.toString(), 1); 
+        updateProducts(staticAcc); 
+        var endTime = performance.now();
+        // console.log(`       > 3.1 Call to updateProducts(staticAcc) took ${endTime - startTime} ms`)
 
-//         let accNewHex = "0x" + bigInt(accNew).toString(16); 
-//         let staticAccHex = "0x" + bigInt(staticAcc).toString(16);
+        let accNewHex = "0x" + bigInt(accNew).toString(16); 
+        let staticAccHex = "0x" + bigInt(staticAcc).toString(16);
 
-//         // get product for static acc 
-//         let accProduct = getProduct(); 
+        // get product for static acc 
+        let accProduct = getProduct(); 
 
-//         // var startTime = performance.now();
-//         // calculate w 
-//         // let w = bigInt(g).modPow(accProduct, n); 
-//         // var endTime = performance.now();
-//         // console.log(`       > 4 Call to compute witness took ${endTime - startTime} ms`)
+        // var startTime = performance.now();
+        // calculate w 
+        // let w = bigInt(g).modPow(accProduct, n); 
+        // var endTime = performance.now();
+        // console.log(`       > 4 Call to compute witness took ${endTime - startTime} ms`)
 
-//         var startTime = performance.now();
-//         // update products info 
-//         updateProduct(staticAcc);
-//         var endTime = performance.now();
-//         // console.log(`       > 5 Call to updateProduct(staticAcc) took ${endTime - startTime} ms`)
-//         // witness as hex 
-//         // let wHex = "0x" + w.toString(16);
+        var startTime = performance.now();
+        // update products info 
+        updateProduct(staticAcc);
+        var endTime = performance.now();
+        // console.log(`       > 5 Call to updateProduct(staticAcc) took ${endTime - startTime} ms`)
+        // witness as hex 
+        // let wHex = "0x" + w.toString(16);
 
-//         // transaction hash 
-//         let receipt; 
-//         var startTime = performance.now();
-//         // update data inside the contract 
-//         await accInstance.update(bitmap, staticAccHex, accNewHex /*, wHex */).then((result) => {
-//             receipt = result.receipt.transactionHash;
-//         });
-//         // store tx in the contract 
-//         await accInstance.updateTx(receipt, epoch); 
-//         var endTime = performance.now();
-//         // console.log(`       > 6 Call to update contract took ${endTime - startTime} ms`)
+        // transaction hash 
+        let receipt; 
+        var startTime = performance.now();
+        // update data inside the contract 
+        await accInstance.update(bitmap, staticAccHex, accNewHex /*, wHex */).then((result) => {
+            receipt = result.receipt.transactionHash;
+        });
+        // store tx in the contract 
+        await accInstance.updateTx(receipt, epoch); 
+        var endTime = performance.now();
+        // console.log(`       > 6 Call to update contract took ${endTime - startTime} ms`)
 
-//         // reset bitmap 
-//         bitmap = 0; 
-//         // update epoch in the smart contract 
-//         await bitmapInstance.updateEpoch(); 
-//     }
+        // reset bitmap 
+        bitmap = 0; 
+        // update epoch in the smart contract 
+        await bitmapInstance.updateEpoch(); 
+    }
     
-//     // what if more than 1 issuers call the addToBitmap function? 
-//     // TODO: lock function for updating bitmap 
-//     bitmap = await bitmapInstance.addToBitmap(bitmap, hashCount, elementHex);
-//     await bitmapInstance.updateBitmap(bitmap); 
-// }
+    // what if more than 1 issuers call the addToBitmap function? 
+    // TODO: lock function for updating bitmap 
+    bitmap = await bitmapInstance.addToBitmap(bitmap, hashCount, elementHex);
+    await bitmapInstance.updateBitmap(bitmap); 
+}
 
 async function addToBitmap(bitmapInstance, accInstance, element) {
     let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
     // add prime to the array, ideally this would be the distributed storage 
-    storeEpochPrimes(element); // credential 
+    // storeEpochPrimes(element); // credential 
 
     // when new element revoked, update overall epoch product, which is p * p * ... p
     // where p is each element being revoked 
-    // updateEpochProduct(element); 
+    // no need to record every revoked credential, only their final prime 
+    updateEpochProduct(element); 
 
     // converts prime number to hex string 
     let elementHex = "0x" + element.toString(16); 
@@ -126,19 +127,30 @@ async function addToBitmap(bitmapInstance, accInstance, element) {
 
     // capacity reached, current data is packed and new epoch starts
     if (count.toNumber() + 10 == capacity.toNumber()) {
-        // console.log("created new bitmap...")
+        // get current product number
+        let epochProduct = getEpochProduct(); 
+
         // packs current epoch primes into static accumulator x 
-        let staticAcc = endEpoch(); // acc is prime 
+        let staticAcc = endEpoch(epochProduct); // acc is prime 
+        
         // updated global accumulator and static acc hex 
         let [ accNew, accNewHex, staticAccHex ] = await addToGlobal(accInstance, staticAcc); 
-        // store the data first 
-
+        
         var startTime = performance.now();
+        // store the data first 
         storeStaticAccData(epoch.toNumber(), staticAcc.toString(), 1); 
         // then update products data for each element 
         updateProducts(staticAcc);
         var endTime = performance.now(); 
         console.log(`Computing product took: ${endTime - startTime}`); 
+
+        // epoch product is the product of all revoked credentials during epoch 
+        // product = p1 * p2 * ... pn 
+        
+        // staticAcc = g^product mod n 
+        // globalAcc = currentAcc^staticAcc mod n 
+
+        // if globalAcc = currentAcc^product mod n 
 
 
         // why do we need product of static accs? 
@@ -155,7 +167,32 @@ async function addToBitmap(bitmapInstance, accInstance, element) {
         
         // can we remove witness and still be sure that the staticAcc was in fact past of current globalAcc history? 
 
-            
+        // this approach is still low frequency update because number of revoked credentials 
+        // is less than number of wintess updates performed !!! 
+        // mapping epoch => { bitmap, staticAcc, txHash }
+        // txHash                                   ^ { witness, pastGlobalAcc }
+        //                                                 ^ g ^ staticAcc_product mod n 
+        //                                                 ^ expensive to compute, exponential 
+
+        // verify true if (witness ^ staticAcc mod n) == pastGlobalAcc 
+        //                ((g ^ staticAcc_product mod n) ^ staticAcc) mod n == pastGlobalAcc 
+        //                          ^ grows exponentially with each new staticAcc
+
+        // mapping epoch => { bitmap, staticAcc, txHash, historyHash }
+        //                                                    ^ hash( { staticAcc, pastGlobalAcc }, txHash )
+        //                                          ^ { staticAcc, pastGlobalAcc }
+        
+        // verify validity of bitmap: 
+        //      1. get {staticAcc, pastGlobalAcc} though txHash 
+        //      2. take hash({staticAcc, pastGlobalAcc}, txHash)
+        //      3. if newHash == historyHash, then true 
+
+        // each staticAcc has a mapping in Accumulator contract and thus transaction 
+        // this prooves the bitmap was in the history? 
+
+        // mapping epoch => { bitmap, statiAcc, pastGlobalAcc }
+        // 
+
 
         // get n, g values 
         let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
