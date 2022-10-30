@@ -112,12 +112,11 @@ async function addToBitmap(bitmapInstance, accInstance, element) {
     if (count.toNumber() + 10 == capacity.toNumber()) {
 
         // get n, g values 
-        let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
+        // let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
 
         // get current product number
         let epochProduct = getEpochProduct(); 
-
-        epochProduct = bigInt(epochProduct).mod(n); 
+        // epochProduct = bigInt(epochProduct).mod(n); 
 
         // console.log(epochProduct); 
         // console.log(epochProduct.toString().length); 
@@ -165,7 +164,8 @@ async function addToBitmap(bitmapInstance, accInstance, element) {
             receipt = result.receipt.transactionHash;
         });
         // store tx in the contract 
-        await accInstance.updateTx(newAccHex, receipt); 
+        // newGlobalAcc => txHash 
+        await accInstance.updateTx(epoch, receipt); 
 
         // console.log("stroed txHash:", receipt);
 
@@ -182,47 +182,71 @@ async function addToBitmap(bitmapInstance, accInstance, element) {
 }
 
 async function verifyBitmap(accInstance, epoch, currentEpoch) {
-    let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
-    let data = await accInstance.getBitmap(epoch); 
 
-    let bitmap = data[0]; 
-    let staticAcc = bigInt(data[1].slice(2), 16); 
-    let acci = bigInt(data[2].slice(2), 16); 
+    let n = await accInstance.getModulus(); 
+    n = bigInt(n.slice(2), 16); 
 
-    // to get its related global acc, add staticAcc to acc_i 
-    let accj = bigInt(acci).modPow(staticAcc, n); 
-
-    let accjHex = "0x" + accj.toString(16); 
-    let acciHex = data[2]; 
-
-    let txHash = await accInstance.getHistory(accjHex); 
-
+    let txHash = await accInstance.getTx(epoch); 
+    // console.log(txHash); 
     let tx = await web3.eth.getTransactionReceipt(txHash);
-    // console.log("retrieved txHash:", tx); 
+    // console.log(tx)
 
-    let retrievedHash = tx.logs[0].data; 
-    // console.log("hash from tx", retrievedHash); 
+    // recovered tx of the previous state
+    // can get the past global acc and hash of (acci, accj)
 
-    // console.log(typeof acciHex)
 
-    // console.log(acciHex.length, acciHex)
-    // console.log(accjHex.length, accjHex) 
+    let pastStaticAcc = bigInt((tx.logs[0].data).slice(130), 16);
+    let pastGlobalAcc = bigInt((tx.logs[1].data).slice(130), 16);
+    let pastHash = tx.logs[2].data;
+
+    let accj = bigInt(pastGlobalAcc).modPow(pastStaticAcc, n); 
+
+    let acciHex = "0x" + pastGlobalAcc.toString(16); 
+    let accjHex = "0x" + accj.toString(16); 
 
     if (acciHex.length % 2 != 0) {
-        acciHex = "0x0" + acci.toString(16); 
+        acciHex = "0x0" + pastGlobalAcc.toString(16); 
     }
-
     if (accjHex.length % 2 != 0) {
         accjHex = "0x0" + accj.toString(16); 
     }
 
-    let computedHash = web3.utils.soliditySha3(acciHex, accjHex);
+    let calcHash = web3.utils.soliditySha3(acciHex, accjHex);
 
-    // console.log("hash computed", computedHash); 
-    // console.log("hashes same:", retrievedHash === computedHash)
-    // console.log("")
+    console.log(calcHash); 
+    console.log(pastHash); 
+    console.log(calcHash === pastHash); 
+    return(calcHash === pastHash); 
 
-    return (retrievedHash === computedHash);
+    // let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
+    // let data = await accInstance.getBitmap(epoch); 
+
+    // let bitmap = data[0]; 
+    // let staticAcc = bigInt(data[1].slice(2), 16); 
+    // let acci = bigInt(data[2].slice(2), 16); 
+    // // to get its related global acc, add staticAcc to acc_i 
+    // let accj = bigInt(acci).modPow(staticAcc, n); 
+    // let accjHex = "0x" + accj.toString(16); 
+    // let acciHex = data[2]; 
+    // let txHash = await accInstance.getHistory(accjHex); 
+    // let tx = await web3.eth.getTransactionReceipt(txHash);
+    // // console.log("retrieved txHash:", tx); 
+
+    // let retrievedHash = tx.logs[0].data; 
+    // // console.log("hash from tx", retrievedHash); 
+
+    // if (acciHex.length % 2 != 0) {
+    //     acciHex = "0x0" + acci.toString(16); 
+    // }
+    // if (accjHex.length % 2 != 0) {
+    //     accjHex = "0x0" + accj.toString(16); 
+    // }
+
+    // let computedHash = web3.utils.soliditySha3(acciHex, accjHex);
+    // // console.log("hash computed", computedHash); 
+    // // console.log("hashes same:", retrievedHash === computedHash)
+    // // console.log("")
+    // return (retrievedHash === computedHash);
 }
 
 async function _verifyBitmap(accInstance, epoch, currentEpoch) {
