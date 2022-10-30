@@ -20,7 +20,8 @@ contract Accumulator {
         bool lock;              // lock the bitmap once its data added, so no one can change it 
         uint256 bitmap;         // bitmap value 
         bytes staticAcc;        // static accumulator of bitmap 
-        bytes txHash;           // record the tx hash where witness and global acc data can be found? 
+        // bytes txHash;           // record the tx hash where witness and global acc data can be found? 
+        bytes prevGlobalAcc;    // previous value of the global acc  
     }
 
     // we can verify inclusion of staticAcc in globalAcc -> 
@@ -30,6 +31,7 @@ contract Accumulator {
     // this is a snapshot of history 
 
     mapping(uint256 => Bitmap) bitmaps; 
+    mapping(bytes   => bytes)  history; 
 
     uint256 numBitmaps; 
     address issuerRegistryAddress; 
@@ -61,38 +63,57 @@ contract Accumulator {
     //     return (bitmaps[_id].globalAcc, bitmaps[_id].witness, n); 
     // }
 
-    function getHistoryLen() public view returns(uint256) {
-        return numBitmaps; 
+    // function getHistoryLen() public view returns(uint256) {
+    //     return numBitmaps; 
+    // }
+
+    // function getTx(uint256 _id) public view returns(bytes memory) {
+    //     return bitmaps[_id].txHash; 
+    // }
+
+    function getBitmap(uint256 _id) public view returns(uint256, bytes memory, bytes memory) {
+        return (bitmaps[_id].bitmap, bitmaps[_id].staticAcc, bitmaps[_id].prevGlobalAcc); 
     }
 
-    function getTx(uint256 _id) public view returns(bytes memory) {
-        return bitmaps[_id].txHash; 
+    function getHistory(bytes memory _acc) public view returns(bytes memory) {
+        return (history[_acc]); 
     }
 
     // witness for the static acc in acc 
-    event proof(bytes _proof, bytes _acc); 
-    event witness(bytes _wintess, bytes _acc); 
-    event accValue(bytes _acc); 
+    // event proof(bytes _proof, bytes _acc); 
+    // event witness(bytes _wintess, bytes _acc); 
+    // event accValue(bytes _acc); 
+
+    event past(bytes32); 
 
     // add value to accumulator 
     // only registered issuers can do this 
     // only called when epoch ended and new bitmap added to the mapping 
-    function update(uint256 _bitmap, bytes memory _staticAcc, bytes memory _globalAcc, bytes memory _w) public /*returns(bytes memory, bytes memory)*/ {
+    function update(uint256 _bitmap, bytes memory _staticAcc, bytes memory _newGlobalAcc) public /*returns(bytes memory, bytes memory)*/ {
         // get the current epoch value 
         SubAccumulator acc = SubAccumulator(subAccumulatorAddress); 
         uint256 epoch = acc.getEpoch(); 
-        bitmaps[epoch].bitmap = _bitmap;        // bitmap 
-        bitmaps[epoch].staticAcc = _staticAcc;  // static accumulator
-        globalAcc = _globalAcc;                 // global accumulator updated
-        numBitmaps = epoch;  
+
+        bitmaps[epoch].bitmap = _bitmap;            // bitmap 
+        bitmaps[epoch].staticAcc = _staticAcc;      // static accumulator
+        bitmaps[epoch].prevGlobalAcc = globalAcc; 
+
+        emit past(keccak256(abi.encodePacked(globalAcc, _newGlobalAcc))); 
+
+        
+
+        globalAcc = _newGlobalAcc;                 // global accumulator updated
+        
+        // numBitmaps = epoch;  
         // emit proof(_proof, _globalAcc); 
-        emit witness(_w, _globalAcc);
+        // emit witness(_w, _globalAcc);
         // emit accValue(_globalAcc); 
     }
 
     // should include lock function, lock any tx updates once its been updated 
-    function updateTx(bytes memory _txHash, uint256 _id) public {
-        bitmaps[_id].txHash = _txHash; 
+    // acc => txHash -> hash(pastAcc, currAcc) 
+    function updateTx(bytes memory _acc, bytes memory _txHash) public {
+        history[_acc] = _txHash; 
     }
 
     // on-chain verification option 
