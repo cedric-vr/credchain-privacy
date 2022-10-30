@@ -22,7 +22,7 @@ contract Accumulator {
         bytes staticAcc;        // static accumulator of bitmap 
         
         bytes32 transaction;           // record the tx hash where witness and global acc data can be found? 
-        bytes prevGlobalAcc;    // previous value of the global acc  
+        // bytes prevGlobalAcc;    // previous value of the global acc  
     }
 
     // we can verify inclusion of staticAcc in globalAcc -> 
@@ -60,6 +60,8 @@ contract Accumulator {
         return (n); 
     }
 
+
+    // can remove static acc, only need bitmap 
     function getStaticAcc(uint256 _id) public view returns(uint256, bytes memory) {
         return (bitmaps[_id].bitmap, bitmaps[_id].staticAcc); 
     }
@@ -76,9 +78,9 @@ contract Accumulator {
         return bitmaps[_id].transaction; 
     }
 
-    function getBitmap(uint256 _id) public view returns(uint256, bytes memory, bytes memory) {
-        return (bitmaps[_id].bitmap, bitmaps[_id].staticAcc, bitmaps[_id].prevGlobalAcc); 
-    }
+    // function getBitmap(uint256 _id) public view returns(uint256, bytes memory) {
+    //     return (bitmaps[_id].bitmap, bitmaps[_id].staticAcc); 
+    // }
 
     // function getHistory(bytes memory _acc) public view returns(bytes memory) {
     //     return (history[_acc]); 
@@ -121,6 +123,13 @@ contract Accumulator {
     function updateTx(uint256 _id, /*bytes memory _acc,*/ bytes32 _txHash) public {
         bitmaps[_id].transaction = _txHash; 
         // history[_acc] = _txHash; 
+    }
+
+    function verifyHash(bytes memory _acci, bytes memory _accj, bytes32 _targetHash) public pure returns(bool) {
+        if (keccak256(abi.encodePacked(_acci, _accj)) == _targetHash) {
+            return true; 
+        }
+        else { return false; }
     }
 
     // on-chain verification option 

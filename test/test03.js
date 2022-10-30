@@ -191,7 +191,7 @@ describe("Testing revocation across different epoch", function() {
 			// console.log(`Call to verification of valid credential took ${endTime - startTime} milliseconds`)
 
             await verify(credentialHash_a, epoch_a, subAccInstance, accInstance).then((result) => {
-				console.log(result)
+				console.log("verification result:", result)
 				assert.isTrue(result, "the credential is valid"); 
             });
         });
@@ -204,10 +204,10 @@ describe("Testing revocation across different epoch", function() {
 
             // verifier receives from the user credential hash and epoch when it was issued 
             // the credentialHash_b is the first element of the inclusion set and was revoked 
-            // await verify(credentialHash_b, epoch_b, subAccInstance, accInstance).then((result) => {
-			// 	console.log(result)
-            //     assert.isFalse(result, "the credential was revoked"); 
-            // });
+            await verify(credentialHash_b, epoch_b, subAccInstance, accInstance).then((result) => {
+				console.log("verification result:", result)
+                assert.isFalse(result, "the credential was revoked"); 
+            });
         });
     }); 
 

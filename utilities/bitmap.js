@@ -19,83 +19,8 @@ async function initBitmap(instance, capacity) {
     await instance.updateHashCount(hashCount, capacity); 
 }
 
-// async function _addToBitmap(bitmapInstance, accInstance, element) {
-//     let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
-//     // add prime to the array, ideally this would be the distributed storage 
-//     // storeEpochPrimes(element); // credential 
-
-//     // when new element revoked, update overall epoch product, which is p * p * ... p
-//     // where p is each element being revoked 
-//     // no need to record every revoked credential, only their final prime 
-//     updateEpochProduct(element); 
-
-//     // converts prime number to hex string 
-//     let elementHex = "0x" + element.toString(16); 
-
-//     // console.log("count:", count.toNumber());
-//     // console.log("capacity", capacity.toNumber()); 
-//     // console.log("epoch", epoch.toNumber(), "; element", element); 
-
-//     // capacity reached, current data is packed and new epoch starts
-//     if (count.toNumber() + 10 == capacity.toNumber()) {
-//         // get current product number
-//         let epochProduct = getEpochProduct(); 
-
-//         // packs current epoch primes into static accumulator x 
-//         let staticAcc = endEpoch(epochProduct); // acc is prime 
-        
-//         // updated global accumulator and static acc hex 
-//         let [ accNew, accNewHex, staticAccHex ] = await addToGlobal(accInstance, staticAcc); 
-        
-//         var startTime = performance.now();
-//         // store the data first 
-//         storeStaticAccData(epoch.toNumber(), staticAcc.toString(), 1); 
-//         // then update products data for each element 
-//         updateProducts(staticAcc);
-//         var endTime = performance.now(); 
-//         console.log(`Computing product took: ${endTime - startTime}`); 
-
-
-//         // get n, g values 
-//         let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
-//         // get the current product for the x 
-//         let products = readStaticAccProducts(); 
-//         let x_product = products[epoch - 1]; 
-
-//         var startTime = performance.now();
-//         // calculate w for the staticAcc 
-//         let w = bigInt(g).modPow(x_product, n);         // the most time consuming part because product grows 
-//         var endTime = performance.now(); 
-//         console.log(`Computing witness took: ${endTime - startTime} ms`); 
-//         console.log(); 
-//         // convert to hex 
-//         let wHex = "0x" + w.toString(16);
-//         // transaction hash 
-//         let receipt; 
-//         // update data inside the contract 
-//         await accInstance.update(bitmap, staticAccHex, accNewHex, wHex).then((result) => {
-//             receipt = result.receipt.transactionHash;
-//         });
-//         // store tx in the contract 
-//         await accInstance.updateTx(receipt, epoch); 
-
-//         // reset bitmap 
-//         bitmap = 0; 
-//         // update epoch in the smart contract 
-//         await bitmapInstance.updateEpoch(); 
-//     }
-    
-//     // what if more than 1 issuers call the addToBitmap function? 
-//     // TODO: lock function for updating bitmap 
-//     bitmap = await bitmapInstance.addToBitmap(bitmap, hashCount, elementHex);
-//     await bitmapInstance.updateBitmap(bitmap); 
-// }
-
 async function addToBitmap(bitmapInstance, accInstance, element) {
     let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
-    // add prime to the array, ideally this would be the distributed storage 
-    // storeEpochPrimes(element); // credential 
-
     // when new element revoked, update overall epoch product, which is p * p * ... p
     // where p is each element being revoked 
     // no need to record every revoked credential, only their final prime 
@@ -118,44 +43,11 @@ async function addToBitmap(bitmapInstance, accInstance, element) {
         let epochProduct = getEpochProduct(); 
         // epochProduct = bigInt(epochProduct).mod(n); 
 
-        // console.log(epochProduct); 
-        // console.log(epochProduct.toString().length); 
-
         // packs current epoch primes into static accumulator x 
         let staticAcc = endEpoch(epochProduct); // acc is prime 
 
-        // console.log(staticAcc);
-        // var startTime = performance.now();
-        // console.log(bigInt(g).modPow(epochProduct, n)); 
-        // var endTime = performance.now(); 
-        // console.log(`Computing static acc took: ${endTime - startTime} ms`); 
-        
         // updated global accumulator and static acc hex 
         let [ newAcc, newAccHex, staticAccHex ] = await addToGlobal(accInstance, staticAcc); 
-        
-        // var startTime = performance.now();
-        // store the data first 
-        // storeStaticAccData(epoch.toNumber(), staticAcc.toString(), 1); 
-        // then update products data for each element 
-        // updateProducts(staticAcc);
-        // var endTime = performance.now(); 
-        // console.log(`Computing product took: ${endTime - startTime}`); 
-
-        // get the current product for the x 
-        // let products = readStaticAccProducts(); 
-        // let x_product = products[epoch - 1]; 
-
-        // var startTime = performance.now();
-        // calculate w for the staticAcc 
-        // let w = bigInt(g).modPow(x_product, n);         // the most time consuming part because product grows 
-        // var endTime = performance.now(); 
-        // console.log(`Computing witness took: ${endTime - startTime} ms`); 
-        // console.log(); 
-        // convert to hex 
-        // let wHex = "0x" + w.toString(16);
-
-        // we know previousAcc and newAcc 
-        // hash(previousAcc, newAcc)
 
         // transaction hash 
         let receipt; 
@@ -181,88 +73,33 @@ async function addToBitmap(bitmapInstance, accInstance, element) {
     await bitmapInstance.updateBitmap(bitmap); 
 }
 
-async function verifyBitmap(accInstance, epoch, currentEpoch) {
-
+async function verifyBitmap(accInstance, epoch) {
     let n = await accInstance.getModulus(); 
     n = bigInt(n.slice(2), 16); 
 
     let txHash = await accInstance.getTx(epoch); 
-    // console.log(txHash); 
     let tx = await web3.eth.getTransactionReceipt(txHash);
-    // console.log(tx)
 
     // recovered tx of the previous state
     // can get the past global acc and hash of (acci, accj)
-
-
     let pastStaticAcc = bigInt((tx.logs[0].data).slice(130), 16);
     let pastGlobalAcc = bigInt((tx.logs[1].data).slice(130), 16);
     let pastHash = tx.logs[2].data;
-
+    // compute the accj using acci^staticAcc mod n 
     let accj = bigInt(pastGlobalAcc).modPow(pastStaticAcc, n); 
-
+    // convert accs to strings 
     let acciHex = "0x" + pastGlobalAcc.toString(16); 
     let accjHex = "0x" + accj.toString(16); 
-
-    if (acciHex.length % 2 != 0) {
-        acciHex = "0x0" + pastGlobalAcc.toString(16); 
-    }
-    if (accjHex.length % 2 != 0) {
-        accjHex = "0x0" + accj.toString(16); 
-    }
-
-    let calcHash = web3.utils.soliditySha3(acciHex, accjHex);
-
-    console.log(calcHash); 
-    console.log(pastHash); 
-    console.log(calcHash === pastHash); 
-    return(calcHash === pastHash); 
-
-    // let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
-    // let data = await accInstance.getBitmap(epoch); 
-
-    // let bitmap = data[0]; 
-    // let staticAcc = bigInt(data[1].slice(2), 16); 
-    // let acci = bigInt(data[2].slice(2), 16); 
-    // // to get its related global acc, add staticAcc to acc_i 
-    // let accj = bigInt(acci).modPow(staticAcc, n); 
-    // let accjHex = "0x" + accj.toString(16); 
-    // let acciHex = data[2]; 
-    // let txHash = await accInstance.getHistory(accjHex); 
-    // let tx = await web3.eth.getTransactionReceipt(txHash);
-    // // console.log("retrieved txHash:", tx); 
-
-    // let retrievedHash = tx.logs[0].data; 
-    // // console.log("hash from tx", retrievedHash); 
-
-    // if (acciHex.length % 2 != 0) {
-    //     acciHex = "0x0" + acci.toString(16); 
-    // }
-    // if (accjHex.length % 2 != 0) {
-    //     accjHex = "0x0" + accj.toString(16); 
-    // }
-
-    // let computedHash = web3.utils.soliditySha3(acciHex, accjHex);
-    // // console.log("hash computed", computedHash); 
-    // // console.log("hashes same:", retrievedHash === computedHash)
-    // // console.log("")
-    // return (retrievedHash === computedHash);
+    // verification result to return 
+    let res; 
+    // calculate and verify hash on-chain 
+    await accInstance.verifyHash(acciHex, accjHex, pastHash).then((result) => {
+        if (result === true) { res = true; }
+        else { res = false; }
+    });
+    return res; 
 }
 
-async function _verifyBitmap(accInstance, epoch, currentEpoch) {
-    let txHash = await accInstance.getTx(epoch); 
-    let tx = await web3.eth.getTransactionReceipt(txHash);
-    let data = tx.logs[0].data; 
-
-    // option 2: calculate the proof and verify  ---- the working one 
-    let [ bitmap, staticAcc ] = await getStaticAccData(accInstance, epoch); 
-    let [ acc, n, g ] = await getGlobalAccData(accInstance); 
-    let witnessPrime = bigInt(data.slice(194, 1218), 16); 
-    let globalAccPrime = bigInt(data.slice(1282), 16); 
-    let proof = bigInt(witnessPrime).modPow(staticAcc, n);
-    // console.log("result:", bigInt(proof).equals(globalAccPrime))
-    return bigInt(proof).equals(globalAccPrime);  
-}
 
 async function getBitmapData(instance) {
     // returns bitmap, hashCount, count, capacity, epoch
@@ -478,3 +315,126 @@ module.exports = { initBitmap, addToBitmap, getBitmapData, getStaticAccData, get
 
         // mapping epoch => { bitmap, statiAcc, pastGlobalAcc }
         // 
+
+
+
+
+// async function _addToBitmap(bitmapInstance, accInstance, element) {
+//     let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
+//     // add prime to the array, ideally this would be the distributed storage 
+//     // storeEpochPrimes(element); // credential 
+
+//     // when new element revoked, update overall epoch product, which is p * p * ... p
+//     // where p is each element being revoked 
+//     // no need to record every revoked credential, only their final prime 
+//     updateEpochProduct(element); 
+
+//     // converts prime number to hex string 
+//     let elementHex = "0x" + element.toString(16); 
+
+//     // console.log("count:", count.toNumber());
+//     // console.log("capacity", capacity.toNumber()); 
+//     // console.log("epoch", epoch.toNumber(), "; element", element); 
+
+//     // capacity reached, current data is packed and new epoch starts
+//     if (count.toNumber() + 10 == capacity.toNumber()) {
+//         // get current product number
+//         let epochProduct = getEpochProduct(); 
+
+//         // packs current epoch primes into static accumulator x 
+//         let staticAcc = endEpoch(epochProduct); // acc is prime 
+        
+//         // updated global accumulator and static acc hex 
+//         let [ accNew, accNewHex, staticAccHex ] = await addToGlobal(accInstance, staticAcc); 
+        
+//         var startTime = performance.now();
+//         // store the data first 
+//         storeStaticAccData(epoch.toNumber(), staticAcc.toString(), 1); 
+//         // then update products data for each element 
+//         updateProducts(staticAcc);
+//         var endTime = performance.now(); 
+//         console.log(`Computing product took: ${endTime - startTime}`); 
+
+
+//         // get n, g values 
+//         let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
+//         // get the current product for the x 
+//         let products = readStaticAccProducts(); 
+//         let x_product = products[epoch - 1]; 
+
+//         var startTime = performance.now();
+//         // calculate w for the staticAcc 
+//         let w = bigInt(g).modPow(x_product, n);         // the most time consuming part because product grows 
+//         var endTime = performance.now(); 
+//         console.log(`Computing witness took: ${endTime - startTime} ms`); 
+//         console.log(); 
+//         // convert to hex 
+//         let wHex = "0x" + w.toString(16);
+//         // transaction hash 
+//         let receipt; 
+//         // update data inside the contract 
+//         await accInstance.update(bitmap, staticAccHex, accNewHex, wHex).then((result) => {
+//             receipt = result.receipt.transactionHash;
+//         });
+//         // store tx in the contract 
+//         await accInstance.updateTx(receipt, epoch); 
+
+//         // reset bitmap 
+//         bitmap = 0; 
+//         // update epoch in the smart contract 
+//         await bitmapInstance.updateEpoch(); 
+//     }
+    
+//     // what if more than 1 issuers call the addToBitmap function? 
+//     // TODO: lock function for updating bitmap 
+//     bitmap = await bitmapInstance.addToBitmap(bitmap, hashCount, elementHex);
+//     await bitmapInstance.updateBitmap(bitmap); 
+// }
+
+// async function _verifyBitmap(accInstance, epoch, currentEpoch) {
+//     let txHash = await accInstance.getTx(epoch); 
+//     let tx = await web3.eth.getTransactionReceipt(txHash);
+//     let data = tx.logs[0].data; 
+
+//     // option 2: calculate the proof and verify  ---- the working one 
+//     let [ bitmap, staticAcc ] = await getStaticAccData(accInstance, epoch); 
+//     let [ acc, n, g ] = await getGlobalAccData(accInstance); 
+//     let witnessPrime = bigInt(data.slice(194, 1218), 16); 
+//     let globalAccPrime = bigInt(data.slice(1282), 16); 
+//     let proof = bigInt(witnessPrime).modPow(staticAcc, n);
+//     // console.log("result:", bigInt(proof).equals(globalAccPrime))
+//     return bigInt(proof).equals(globalAccPrime);  
+// }
+
+
+// async function verifyBitmap(accInstance, epoch, currentEpoch) {
+//     let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
+//     let data = await accInstance.getBitmap(epoch); 
+
+//     let bitmap = data[0]; 
+//     let staticAcc = bigInt(data[1].slice(2), 16); 
+//     let acci = bigInt(data[2].slice(2), 16); 
+//     // to get its related global acc, add staticAcc to acc_i 
+//     let accj = bigInt(acci).modPow(staticAcc, n); 
+//     let accjHex = "0x" + accj.toString(16); 
+//     let acciHex = data[2]; 
+//     let txHash = await accInstance.getHistory(accjHex); 
+//     let tx = await web3.eth.getTransactionReceipt(txHash);
+//     // console.log("retrieved txHash:", tx); 
+
+//     let retrievedHash = tx.logs[0].data; 
+//     // console.log("hash from tx", retrievedHash); 
+
+//     if (acciHex.length % 2 != 0) {
+//         acciHex = "0x0" + acci.toString(16); 
+//     }
+//     if (accjHex.length % 2 != 0) {
+//         accjHex = "0x0" + accj.toString(16); 
+//     }
+
+//     let computedHash = web3.utils.soliditySha3(acciHex, accjHex);
+//     // console.log("hash computed", computedHash); 
+//     // console.log("hashes same:", retrievedHash === computedHash)
+//     // console.log("")
+//     return (retrievedHash === computedHash);
+// }

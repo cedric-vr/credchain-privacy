@@ -38,7 +38,7 @@ async function verify(credential, epoch, subAccInstance, accInstance) {
         if (checkRelatedBitmap === true) { return false; } 
 
         // check if the issuance bitmap was in fact part of history 
-        let checkBitmapInclusion = await verifyBitmap(accInstance, epoch, currentEpoch.toNumber()); 
+        let checkBitmapInclusion = await verifyBitmap(accInstance, epoch); 
         // console.log("1", checkBitmapInclusion); 
         // proof failed, cannot trust this bitmap 
         if (checkBitmapInclusion === false) { return false; } 
@@ -73,7 +73,7 @@ async function verify(credential, epoch, subAccInstance, accInstance) {
             // alternative verify bitmap value in the past accumulator 
             
             //  check if the bitmap was in fact part of history 
-            let checkBitmapInclusionSub = await verifyBitmap(accInstance, i, currentEpoch.toNumber()); 
+            let checkBitmapInclusionSub = await verifyBitmap(accInstance, i); 
             // console.log("3", checkBitmapInclusionSub); 
             // proof failed, cannot trust this bitmap 
             if (checkBitmapInclusionSub === false) { return false; } 
