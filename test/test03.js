@@ -14,7 +14,7 @@ const { revoke, verify } = require("../revocation/revocation");
 const DID = artifacts.require("DID"); 
 const Cred = artifacts.require("Credentials"); 
 const Admin = artifacts.require("AdminAccounts"); 
-const Issuer = artifacts.require("Issuers"); 
+const Issuer = artifacts.require("IssuerRegistry"); 
 const SubAcc = artifacts.require("SubAccumulator"); 
 const Acc = artifacts.require("Accumulator"); 
 
@@ -23,6 +23,9 @@ describe("Testing revocation across different epoch", function() {
 	let accounts;
 	let holder;
 	let issuer; 
+
+	let issuer_; 
+	let issuer_Pri;
 
 	// bitmap capacity 
 	let capacity = 20; // up to uin256 max elements 
@@ -51,7 +54,11 @@ describe("Testing revocation across different epoch", function() {
 	before(async function() {
 		accounts = await web3.eth.getAccounts();
 		holder = accounts[1];
-		issuer = accounts[2]; 
+		// issuer = accounts[2]; 
+		// create an account with public/private keys 
+		issuer_ = web3.eth.accounts.create(); 
+		issuer_Pri = issuer_.privateKey; 
+		issuer = issuer_.address;
 	});
 
 	describe("Deployment", function() {
@@ -109,6 +116,12 @@ describe("Testing revocation across different epoch", function() {
 		});
 	});
 
+	describe("Add issuer to the registry", function() {
+		it('Adding issuer', async() => {
+			await issuerRegistryInstance.addIssuer(issuer); 
+		}); 
+	});
+
     describe("Issuance", function() {
         it('Issuing large number of credentials', async() => {
             let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance);
@@ -157,7 +170,7 @@ describe("Testing revocation across different epoch", function() {
             let credentialsToRevoke = credentials.slice(0, 40); 
 
             for (let [cred, prime] of credentialsToRevoke) {
-                await revoke(cred, subAccInstance, accInstance); 
+                await revoke(cred, subAccInstance, accInstance, issuer_Pri); 
             }
 
             // assume credential and prime was stored by the user, retrieve it from local storage to check the inclusion

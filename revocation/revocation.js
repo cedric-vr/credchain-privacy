@@ -7,12 +7,12 @@ const { getStaticAccInRange } = require("../utilities/product");
 var bigInt = require("big-integer");
 
 // issuer function 
-async function revoke(credential, subAccInstance, accInstance) {
+async function revoke(credential, subAccInstance, accInstance, issuer) {
     // credential is represented by a prime and stored at the local device of user, computed once the credential issued
     // issuer does not know prime, so it is computed before revocation 
     let [ credentialPrime, nonce ] = hashToPrime(credential, 128, 0n); 
     // when issuer revokes a credential, it is always added to the bitmap, issuer does not know which one 
-    await addToBitmap(subAccInstance, accInstance, credentialPrime); 
+    await addToBitmap(subAccInstance, accInstance, credentialPrime, issuer); 
 }
 
 // verifier function 

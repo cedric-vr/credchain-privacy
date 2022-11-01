@@ -19,7 +19,7 @@ async function initBitmap(instance, capacity) {
     await instance.updateHashCount(hashCount, capacity); 
 }
 
-async function addToBitmap(bitmapInstance, accInstance, element) {
+async function addToBitmap(bitmapInstance, accInstance, element, issuer) {
     let [ bitmap, hashCount, count, capacity, epoch ] = await getBitmapData(bitmapInstance); 
     // when new element revoked, update overall epoch product, which is p * p * ... p
     // where p is each element being revoked 
@@ -29,37 +29,35 @@ async function addToBitmap(bitmapInstance, accInstance, element) {
     // converts prime number to hex string 
     let elementHex = "0x" + element.toString(16); 
 
-    // console.log("count:", count.toNumber());
-    // console.log("capacity", capacity.toNumber()); 
-    // console.log("epoch", epoch.toNumber(), "; element", element); 
-
     // capacity reached, current data is packed and new epoch starts
     if (count.toNumber() + 10 == capacity.toNumber()) {
-
         // get n, g values 
         // let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
-
         // get current product number
         let epochProduct = getEpochProduct(); 
         // epochProduct = bigInt(epochProduct).mod(n); 
-
         // packs current epoch primes into static accumulator x 
         let staticAcc = endEpoch(epochProduct); // acc is prime 
 
         // updated global accumulator and static acc hex 
         let [ newAcc, newAccHex, staticAccHex ] = await addToGlobal(accInstance, staticAcc); 
 
+        // all the data for accumulator update
+        let data = bitmap.toString() + ";" + staticAcc.toString() + ";" + newAccHex.toString();
+        // sign values for update
+        let sign = web3.eth.accounts.sign(data, issuer); 
+
         // transaction hash 
         let receipt; 
         // update data inside the contract 
-        await accInstance.update(bitmap, staticAccHex, newAccHex).then((result) => {
+        await accInstance.update(bitmap, staticAccHex, newAccHex, sign.messageHash, sign.signature).then((result) => {
             receipt = result.receipt.transactionHash;
+            
         });
+        // issuer to sign tx receipt 
+        sign = web3.eth.accounts.sign(receipt, issuer);
         // store tx in the contract 
-        // newGlobalAcc => txHash 
-        await accInstance.updateTx(epoch, receipt); 
-
-        // console.log("stroed txHash:", receipt);
+        await accInstance.updateTx(epoch, receipt, sign.messageHash, sign.signature); 
 
         // reset bitmap 
         bitmap = 0; 
@@ -77,7 +75,18 @@ async function verifyBitmap(accInstance, epoch) {
     let n = await accInstance.getModulus(); 
     n = bigInt(n.slice(2), 16); 
 
+    // verify bitmap signature for this epoch 
+    await accInstance.verifyBitmapSignature(epoch).then((result) => {
+        if (result === false) { return false; }
+    });
+
     let txHash = await accInstance.getTx(epoch); 
+
+    // verify txhash signature for the epoch 
+    await accInstance.verifyTransactionSignature(txHash).then((result) => {
+        if (result === false) { return false; }
+    });
+
     let tx = await web3.eth.getTransactionReceipt(txHash);
 
     // recovered tx of the previous state

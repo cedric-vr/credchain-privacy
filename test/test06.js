@@ -14,7 +14,7 @@ const { revoke, verify } = require("../revocation/revocation");
 const DID = artifacts.require("DID"); 
 const Cred = artifacts.require("Credentials"); 
 const Admin = artifacts.require("AdminAccounts"); 
-const Issuer = artifacts.require("Issuers"); 
+const Issuer = artifacts.require("IssuerRegistry"); 
 const SubAcc = artifacts.require("SubAccumulator"); 
 const Acc = artifacts.require("Accumulator"); 
 
@@ -23,6 +23,9 @@ describe("Testing revocation across different epoch", function() {
 	let accounts;
 	let holder;
 	let issuer; 
+
+    let issuer_; 
+	let issuer_Pri;
 
 	// bitmap capacity 
 	let capacity = 20; // up to uin256 max elements 
@@ -52,7 +55,11 @@ describe("Testing revocation across different epoch", function() {
 	before(async function() {
 		accounts = await web3.eth.getAccounts();
 		holder = accounts[1];
-		issuer = accounts[2]; 
+		// issuer = accounts[2]; 
+        // create an account with public/private keys 
+		issuer_ = web3.eth.accounts.create(); 
+		issuer_Pri = issuer_.privateKey; 
+		issuer = issuer_.address;
 	});
 
 	describe("Deployment", function() {
@@ -110,6 +117,12 @@ describe("Testing revocation across different epoch", function() {
 		});
 	});
 
+    describe("Add issuer to the registry", function() {
+		it('Adding issuer', async() => {
+			await issuerRegistryInstance.addIssuer(issuer); 
+		}); 
+	});
+
     describe("Issuance & verification", function() {
         function makeid(length) {
             var result           = '';
@@ -139,7 +152,7 @@ describe("Testing revocation across different epoch", function() {
             for (let i = start; i < end; i++) {
                 let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance);
                 var startTime = performance.now();
-                await revoke(credentials[i][0], subAccInstance, accInstance);
+                await revoke(credentials[i][0], subAccInstance, accInstance, issuer_Pri);
                 var endTime = performance.now(); 
                 // console.log(`Revoke credential ${credentials[i][0]} | revocation epoch: ${currentEpoch.toNumber()} | issuance epoch: ${epochs[i]} | took: ${endTime - startTime} ms`)
             }
@@ -287,23 +300,41 @@ describe("Testing revocation across different epoch", function() {
         it('Verify credentials', async() => {
             // await verifyCred(1); 
             await verifyCred(10); 
+            await verifyCred(15); 
             await verifyCred(20);
+            await verifyCred(25); 
             await verifyCred(30);
+            await verifyCred(35); 
             await verifyCred(40);
+            await verifyCred(45); 
             await verifyCred(50);
+            await verifyCred(55); 
             await verifyCred(60);
+            await verifyCred(65); 
             await verifyCred(70);
-            await verifyCred(80); 
+            await verifyCred(75); 
+            await verifyCred(80);
+            await verifyCred(85);  
             await verifyCred(90);
-            await verifyCred(100);      
+            await verifyCred(95); 
+            await verifyCred(100);
+            await verifyCred(105);       
             await verifyCred(110);
+            await verifyCred(115);  
             await verifyCred(120);
+            await verifyCred(125);  
             await verifyCred(130);
+            await verifyCred(135);  
             await verifyCred(140);
+            await verifyCred(145);
             await verifyCred(150);
+            await verifyCred(155);  
             await verifyCred(160);
+            await verifyCred(165);  
             await verifyCred(170);
+            await verifyCred(175);  
             await verifyCred(180);
+            await verifyCred(185);  
             await verifyCred(190);
             // await verifyCred(200);            
         });

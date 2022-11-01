@@ -38,7 +38,7 @@ async function main() {
 	console.log("Admins Registry has been deployed to:", adminReg.address); 
 
 	// issuer registry 
-	const IssuerRegistry = await ethers.getContractFactory('Issuers'); 
+	const IssuerRegistry = await ethers.getContractFactory('IssuerRegistry'); 
 	const issuerReg = await IssuerRegistry.deploy(adminReg.address); 
 	await issuerReg.deployed(); 
 	console.log("Issuers Registry has been deployed to:", issuerReg.address); 

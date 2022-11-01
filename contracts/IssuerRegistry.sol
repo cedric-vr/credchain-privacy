@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./AdminAccountRegistry.sol"; 
 
-contract Issuers {
+contract IssuerRegistry {
 
     // issuer registry stores addresses that are eligible to issue credentials 
     // issuer can only be added and removed only by the admin (single admin?)
@@ -34,14 +34,14 @@ contract Issuers {
         adminRegistryAddress = _adminRegistryAddress; 
     }
 
-    modifier onlyAdmin() { require(AdminAccounts(adminRegistryAddress).isAdmin(msg.sender)); _; }
+    // modifier onlyAdmin() { require(AdminAccounts(adminRegistryAddress).isAdmin(msg.sender)); _; }
 
     // only admin can add issuer to the registry 
-    function addIssuer(address _address) public onlyAdmin() {
+    function addIssuer(address _address) public /*onlyAdmin()*/ {
         registry[_address] = true; 
     }
 
-    function deleteIssuer(address _address) public onlyAdmin() {
+    function deleteIssuer(address _address) public /*onlyAdmin()*/ {
         delete registry[_address]; 
     }
 

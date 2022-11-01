@@ -14,7 +14,7 @@ const { revoke, verify } = require("../revocation/revocation");
 const DID = artifacts.require("DID"); 
 const Cred = artifacts.require("Credentials"); 
 const Admin = artifacts.require("AdminAccounts"); 
-const Issuer = artifacts.require("Issuers"); 
+const Issuer = artifacts.require("IssuerRegistry"); 
 const SubAcc = artifacts.require("SubAccumulator"); 
 const Acc = artifacts.require("Accumulator"); 
 
@@ -23,6 +23,9 @@ describe("Testing revocation across different epoch", function() {
 	let accounts;
 	let holder;
 	let issuer; 
+
+    let issuer_; 
+	let issuer_Pri;
 
 	// bitmap capacity 
 	let capacity = 1000; // up to uin256 max elements 
@@ -52,7 +55,11 @@ describe("Testing revocation across different epoch", function() {
 	before(async function() {
 		accounts = await web3.eth.getAccounts();
 		holder = accounts[1];
-		issuer = accounts[2]; 
+		// issuer = accounts[2]; 
+        // create an account with public/private keys 
+		issuer_ = web3.eth.accounts.create(); 
+		issuer_Pri = issuer_.privateKey; 
+		issuer = issuer_.address;
 	});
 
 	describe("Deployment", function() {
@@ -110,6 +117,12 @@ describe("Testing revocation across different epoch", function() {
 		});
 	});
 
+    describe("Add issuer to the registry", function() {
+		it('Adding issuer', async() => {
+			await issuerRegistryInstance.addIssuer(issuer); 
+		}); 
+	});
+
     describe("Issuance & verification", function() {
         function makeid(length) {
             var result           = '';
@@ -139,7 +152,7 @@ describe("Testing revocation across different epoch", function() {
             for (let i = start; i < end; i++) {
                 let [ currentBitmap, hashCount, count, capacity, currentEpoch ] = await getBitmapData(subAccInstance);
                 var startTime = performance.now();
-                await revoke(credentials[i][0], subAccInstance, accInstance);
+                await revoke(credentials[i][0], subAccInstance, accInstance, issuer_Pri);
                 var endTime = performance.now(); 
                 // console.log(`Revoke credential ${credentials[i][0]} | revocation epoch: ${currentEpoch.toNumber()} | issuance epoch: ${epochs[i]} | took: ${endTime - startTime} ms`)
             }
