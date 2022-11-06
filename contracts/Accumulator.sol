@@ -17,31 +17,32 @@ contract Accumulator {
     bytes g; 
 
     struct Bitmap {
-        bool lock;              // lock the bitmap once its data added, so no one can change it 
+        // bool lock;              // lock the bitmap once its data added, so no one can change it 
         uint256 bitmap;         // bitmap value 
         bytes staticAcc;        // static accumulator of bitmap 
+        bytes nextStaticAcc;    // next epoch's static accumulator 
+        bytes globalAcc;        // epoch's global acc 
         bytes signature;        // signature of the issuer who added this bitmap 
         bytes32 bitmapHash;     // hash of the bitmap 
-        bytes32 transaction;    // record the tx hash where witness and global acc data can be found? 
-        // bytes32 transactionSig; // sign the tx hash 
     }
 
-    struct Signature {
-        bytes32 messageHash;    // hash of the message 
-        bytes signature;        // signature for this message  
-    }   
+    struct Transaction {
+        bytes32 txsHash;        // txHash => hash(prevAcc, currAcc)
+        bytes32 msgHash;        // hash of the message 
+        bytes signature;        // signature for the message 
+    }
+
+    uint256 prevEpoch = 0; 
 
     // we can verify inclusion of staticAcc in globalAcc -> 
     // at this point in time, global acc contained the static acc 
     // thus we can trust the bitmap inclusion check 
     
     // this is a snapshot of history 
-
     mapping(uint256 => Bitmap) bitmaps; 
-    // txHash => (message hash, signature)
-    mapping(bytes32 => Signature) signTx;
-    // 
-    // mapping(bytes32 => Signature) signBitmap;
+
+    // globalAcc => { txHash, msgHash, signature }
+    mapping(bytes => Transaction) transactions; 
 
     // uint256 numBitmaps; 
     address issuerRegistryAddress; 
@@ -57,8 +58,9 @@ contract Accumulator {
 
     // only issuer can add values
     // need issuer registry for this 
-    modifier onlyIssuer(address _issuer) { require(IssuerRegistry(issuerRegistryAddress).checkIssuer(_issuer)); _; }
+    modifier onlyIssuer(bytes32 _bitmapHash, bytes memory _signature) { require(checkIssuer(_bitmapHash, _signature) == true, "issuer is not authorised"); _; }
 
+    event pastHash(bytes32); 
 
     // get the accumulator and n values stored in contract 
     function getGlobalAcc() public view returns(bytes memory, bytes memory, bytes memory) {
@@ -74,26 +76,24 @@ contract Accumulator {
         return (bitmaps[_id].bitmap, bitmaps[_id].staticAcc); 
     }
 
-    function getTx(uint256 _id) public view returns(bytes32) {
-        return bitmaps[_id].transaction; 
+    function getCurrGlobalAcc(uint256 _id) public view returns(bytes memory) {
+        return bitmaps[_id].globalAcc; 
     }
 
-    event pastStaticAcc(bytes); 
-    event pastGlobalAcc(bytes); 
-    event pastHash(bytes32); 
-    event signature(bytes32, bytes); 
+    function getNextStaticAcc(uint256 _id) public view returns(bytes memory) {
+        return bitmaps[_id].nextStaticAcc; 
+    }
 
-    bytes globalAcc_; 
-    function updateAcc(bytes memory _globalAcc) public {
-        globalAcc_ = _globalAcc; 
+    function getTx(bytes memory _acc) public view returns(bytes32) {
+        return transactions[_acc].txsHash; 
     }
 
     // add value to accumulator 
     // only registered issuers can do this 
     // only called when epoch ended and new bitmap added to the mapping 
-    function update(uint256 _bitmap, bytes memory _staticAcc, bytes memory _newGlobalAcc, bytes32 _bitmapHash, bytes memory _signature) public /*returns(bytes memory, bytes memory)*/ {
+    function update(uint256 _bitmap, bytes memory _staticAcc, bytes memory _newGlobalAcc, bytes32 _bitmapHash, bytes memory _signature) public onlyIssuer(_bitmapHash, _signature) {
         // check if the message being passed is created by authorised issuer 
-        require(checkIssuer(_bitmapHash, _signature) == true, "issuer is not authorised"); 
+        // require(checkIssuer(_bitmapHash, _signature) == true, "issuer is not authorised"); 
         // get the current epoch value 
         SubAccumulator acc = SubAccumulator(subAccumulatorAddress); 
         uint256 epoch = acc.getEpoch(); 
@@ -102,22 +102,23 @@ contract Accumulator {
         bitmaps[epoch].staticAcc = _staticAcc;      // static accumulator
         bitmaps[epoch].signature = _signature;      // issuer signature 
         bitmaps[epoch].bitmapHash = _bitmapHash;    // hash of the message  
+        bitmaps[epoch].globalAcc = _newGlobalAcc;   // corresponding global acc for _bitmap 
 
-        emit pastStaticAcc(_staticAcc); 
-        emit pastGlobalAcc(globalAcc); 
+        bitmaps[prevEpoch].nextStaticAcc = _staticAcc; 
+
         emit pastHash(keccak256(abi.encodePacked(globalAcc, _newGlobalAcc))); 
 
+        prevEpoch = epoch;                         // set prev to new curr epoch 
         globalAcc = _newGlobalAcc;                 // global accumulator updated
     }
 
     // should include lock function, lock any tx updates once its been updated 
     // acc => txHash -> hash(pastAcc, currAcc) 
-    function updateTx(uint256 _id, bytes32 _txHash, bytes32 _msgHash, bytes memory _signature) public {
-        // check if the message being passed is created by authorised issuer 
-        require(checkIssuer(_msgHash, _signature) == true, "issuer is not authorised"); 
-        bitmaps[_id].transaction = _txHash; 
-        signTx[_txHash].messageHash = _msgHash;
-        signTx[_txHash].signature = _signature; 
+    function updateTx(uint256 _id, bytes32 _txHash, bytes32 _msgHash, bytes memory _signature) public onlyIssuer(_msgHash, _signature) {
+        bytes memory acc = bitmaps[_id].globalAcc;     // get the corresponding acc value for epoch 
+        transactions[acc].txsHash = _txHash;           // txHash related to the globalAcc value 
+        transactions[acc].msgHash = _msgHash;          // signed hash of the transaction 
+        transactions[acc].signature = _signature;      // signature for the hash for verification
     }
 
     function checkIssuer(bytes32 _bitmapHash, bytes memory _signature) internal view returns(bool) {
@@ -135,12 +136,13 @@ contract Accumulator {
         return checkIssuer(bitmapHash_, signature_); 
     }
     
-    function verifyTransactionSignature(bytes32 _txHash) public view returns(bool) {
-        bytes32 messageHash_ = signTx[_txHash].messageHash; 
-        bytes memory signature_ = signTx[_txHash].signature; 
-        return checkIssuer(messageHash_, signature_); 
+    function verifyTransactionSignature(uint256 _id) public view returns(bool) {
+        bytes memory acc = bitmaps[_id].globalAcc; 
+        bytes memory sig = transactions[acc].signature; 
+        bytes32 msgHash = transactions[acc].msgHash; 
+        return checkIssuer(msgHash, sig); 
     }
-
+    
     function verifyHash(bytes memory _acci, bytes memory _accj, bytes32 _targetHash) public pure returns(bool) {
         if (keccak256(abi.encodePacked(_acci, _accj)) == _targetHash) { return true; }
         else { return false; }

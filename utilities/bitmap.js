@@ -12,6 +12,9 @@ const { storeCredential, storeWitnessUser } = require("./userStorage");
 
 let witness; 
 
+let prevEpoch; 
+let nextTx; 
+
 async function initBitmap(instance, capacity) {
     // get the hash count based on capacity 
     let hashCount = await instance.getHashCount(capacity);
@@ -32,7 +35,7 @@ async function addToBitmap(bitmapInstance, accInstance, element, issuer) {
     // capacity reached, current data is packed and new epoch starts
     if (count.toNumber() + 10 == capacity.toNumber()) {
         // get n, g values 
-        // let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
+        let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
         // get current product number
         let epochProduct = getEpochProduct(); 
         // epochProduct = bigInt(epochProduct).mod(n); 
@@ -40,7 +43,11 @@ async function addToBitmap(bitmapInstance, accInstance, element, issuer) {
         let staticAcc = endEpoch(epochProduct); // acc is prime 
 
         // updated global accumulator and static acc hex 
-        let [ newAcc, newAccHex, staticAccHex ] = await addToGlobal(accInstance, staticAcc); 
+        let [ newAcc, newAccHex, staticAccHex, currentAccHex ] = await addToGlobal(accInstance, staticAcc); 
+
+        // when we add staticAcc 
+        // pastAcc^staticAcc = currAcc 
+        // currAcc^staticAcc = nextAcc 
 
         // all the data for accumulator update
         let data = bitmap.toString() + ";" + staticAcc.toString() + ";" + newAccHex.toString();
@@ -59,6 +66,12 @@ async function addToBitmap(bitmapInstance, accInstance, element, issuer) {
         // store tx in the contract 
         await accInstance.updateTx(epoch, receipt, sign.messageHash, sign.signature); 
 
+        // console.log(`acc_i      : ${currentAccHex.slice(0, 40)}`); 
+        // console.log(`staticAcc_i: ${staticAccHex.slice(0, 40)}`); 
+        // // acc_j = acc_i ^ static_i mod n 
+        // console.log(`acc_j      : ${newAccHex.slice(0, 40)}`); 
+        // console.log("")
+
         // reset bitmap 
         bitmap = 0; 
         // update epoch in the smart contract 
@@ -72,41 +85,130 @@ async function addToBitmap(bitmapInstance, accInstance, element, issuer) {
 }
 
 async function verifyBitmap(accInstance, epoch) {
+    // verification result to return 
+    let res; 
+
     let n = await accInstance.getModulus(); 
     n = bigInt(n.slice(2), 16); 
 
-    // verify bitmap signature for this epoch 
+    // verify bitmap signature for this epoch_j
+    // if true, the bitmap was added by the authoritsed issuer 
     await accInstance.verifyBitmapSignature(epoch).then((result) => {
         if (result === false) { return false; }
     });
-
-    let txHash = await accInstance.getTx(epoch); 
-
-    // verify txhash signature for the epoch 
-    await accInstance.verifyTransactionSignature(txHash).then((result) => {
+    // verify txhash signature for the epoch_j
+    await accInstance.verifyTransactionSignature(epoch).then((result) => {
         if (result === false) { return false; }
     });
 
-    let tx = await web3.eth.getTransactionReceipt(txHash);
+    // for epoch_j, get the staticAcc_j 
+    let staticAccHex = await accInstance.getStaticAcc(epoch);
+    let staticAcc = bigInt(staticAccHex[1].slice(2), 16); 
 
+    // for epoch_j, get the globalAcc_j
+    let globalAccHex = await accInstance.getCurrGlobalAcc(epoch);
+    let globalAcc = bigInt(globalAccHex.slice(2), 16); 
+
+    // console.log(`static acc for epoch ${epoch}: ${staticAccHex[1].slice(0, 40)}`);
+    // console.log(`global acc for epoch ${epoch}: ${globalAccHex.slice(0, 40)}`); 
+
+    let nextStaticAccHex = await accInstance.getNextStaticAcc(epoch);
+    // there is a future epoch 
+    if (nextStaticAccHex != null) {
+        let nextStaticAcc = bigInt(nextStaticAccHex.slice(2), 16); 
+        let nextGlobalAcc = bigInt(globalAcc).modPow(nextStaticAcc, n);
+        let nextGlobalAccHex = "0x" + nextGlobalAcc.toString(16); 
+        // console.log(`global acc for epoch ${epoch + 1}: ${nextGlobalAccHex.slice(0, 40)}`);
+        // console.log("")
+
+        // get the txHash for acc_x  
+        let txHash = await accInstance.getTx(nextGlobalAccHex);
+        // retrieve transaction from the blockchain for acc_x
+        let tx = await web3.eth.getTransactionReceipt(txHash);
+        let pastHash = tx.logs[0].data;
+
+        
+        // calculate and verify hash on-chain 
+        await accInstance.verifyHash(globalAccHex, nextGlobalAccHex, pastHash).then((result) => {
+            if (result === true) { res = true; }
+            else { res = false; }
+        });
+        // console.log("result:", res)
+        // return res; 
+    }
+    // there is no future epoch 
+    else {
+        // console.log("no future");
+        let data = await accInstance.getGlobalAcc(); 
+        let currentAcc = data[0]; 
+        // console.log("current accumulator from contract", currentAcc); 
+
+        if (currentAcc === globalAccHex) { res = true }
+        else { res = false }
+        // console.log("result:", res)
+    }
+    // console.log()
+
+    return res; 
+
+    // next global accumulator 
+    // let nextGloblalHex = await accInstance.getNextGlobalAcc(epoch); 
+    // if (nextGloblalHex != null) {
+    //     console.log(`global acc for epoch ${epoch + 1}: ${nextGloblalHex.slice(0, 40)}`); 
+    // }
+    
+    // compute acc_x = globalAcc_i^staticAcc_j mod n 
+    // let nextAcc = bigInt(globalAcc).modPow(staticAcc, n); 
+    // let nextAccHex = "0x" + nextAcc.toString(16); 
+    // console.log(`global acc for epoch ${epoch + 1}: ${nextAccHex.slice(0,40)}`); 
+    // console.log("")
+    
+    // get the txHash for acc_x  
+    // let txHash = await accInstance.getTx(nextAccHex); 
+
+    // if txHash is all zeros, then there is no nextAcc to check with 
+    // need to handle special case otherwise 
+    // console.log("tx hash", txHash)
+
+    // retrieve transaction from the blockchain for acc_x
+    // let tx = await web3.eth.getTransactionReceipt(txHash);
+
+    // console.log("tx", tx); 
+
+    // special case, no future epoch recorded yet
+    // if (tx === null) {
+
+    // }
+    // else {
+    //     let pastHash = tx.logs[0].data; // hash(pastAcc, currAcc)
+    //     console.log(pastHash); 
+
+    //     let ver = await accInstance.verifyHash(globalAccHex, nextAccHex, pastHash);
+    //     console.log(ver); 
+    // }
+
+    
     // recovered tx of the previous state
     // can get the past global acc and hash of (acci, accj)
-    let pastStaticAcc = bigInt((tx.logs[0].data).slice(130), 16);
-    let pastGlobalAcc = bigInt((tx.logs[1].data).slice(130), 16);
-    let pastHash = tx.logs[2].data;
+    // let pastStaticAcc = bigInt((tx.logs[0].data).slice(130), 16);
+    // let pastGlobalAcc = bigInt((tx.logs[1].data).slice(130), 16);
+    // let pastHash = tx.logs[2].data;
+    
     // compute the accj using acci^staticAcc mod n 
-    let accj = bigInt(pastGlobalAcc).modPow(pastStaticAcc, n); 
+    // let accj = bigInt(pastGlobalAcc).modPow(pastStaticAcc, n); 
     // convert accs to strings 
-    let acciHex = "0x" + pastGlobalAcc.toString(16); 
-    let accjHex = "0x" + accj.toString(16); 
-    // verification result to return 
-    let res; 
-    // calculate and verify hash on-chain 
-    await accInstance.verifyHash(acciHex, accjHex, pastHash).then((result) => {
-        if (result === true) { res = true; }
-        else { res = false; }
-    });
-    return res; 
+    // let acciHex = "0x" + pastGlobalAcc.toString(16); 
+    // let accjHex = "0x" + accj.toString(16); 
+    
+    
+    // // verification result to return 
+    // let res; 
+    // // calculate and verify hash on-chain 
+    // await accInstance.verifyHash(acciHex, accjHex, pastHash).then((result) => {
+    //     if (result === true) { res = true; }
+    //     else { res = false; }
+    // });
+    // return res; 
 }
 
 
@@ -127,10 +229,19 @@ async function addToGlobal(accInstance, x) {
     // let data = await accInstance.getAccumulator(); 
     let [ currentAcc, n, g ] = await getGlobalAccData(accInstance);
     // add new element to the current accumulator 
+
+    // let currAccHex = "0x" + currentAcc.toString(16); 
+    // console.log(`Current acc before add ${currAccHex.slice(0,40)}`); 
+
     let accNew = add(currentAcc, n, x); // x is static accumulator 
     let accNewHex = "0x" + bigInt(accNew).toString(16); 
     let xHex = "0x" + bigInt(x).toString(16);
-    return [ accNew, accNewHex, xHex ]; 
+    let currentAccHex = "0x" + bigInt(currentAcc).toString(16); 
+
+    // console.log(`adding static acc: ${xHex.slice(0, 40)}`)
+    // console.log(`after add of static: ${accNewHex.slice(0, 40)}`)
+
+    return [ accNew, accNewHex, xHex, currentAccHex ]; 
 }
 
 // check inclusion of x in global acc 

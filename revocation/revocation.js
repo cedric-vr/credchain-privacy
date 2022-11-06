@@ -35,7 +35,14 @@ async function verify(credential, epoch, subAccInstance, accInstance) {
         // check the inclusion of provided credential with retrieved bitmap (inclusion in corresponding bitmap)
         let checkRelatedBitmap = await checkInclusionBitmap(subAccInstance, pastBitmap, hashCount, credentialPrime); 
         // true if cred included in bitmap, the credential has been revoked 
-        if (checkRelatedBitmap === true) { return false; } 
+        if (checkRelatedBitmap === true) { 
+            // verify bitmap 
+            let verifyBitmapRevoked = await verifyBitmap(accInstance, epoch); 
+            // if the bitmap is true history, then credential was revoked 
+            if (verifyBitmapRevoked === true) { return false; }
+            // otherwise, the bitmap cannot be trusted and need to return something else - undefined ?? 
+            // return false; 
+        } 
 
         // check if the issuance bitmap was in fact part of history 
         let checkBitmapInclusion = await verifyBitmap(accInstance, epoch); 
@@ -56,7 +63,7 @@ async function verify(credential, epoch, subAccInstance, accInstance) {
         // if the previous check returns true, the static acc is a member of global acc and can be trusted 
         // check the subsequent bitmaps for credential exclusion and verify their membership in global acc 
         for (let i = epoch + 1; i < currentEpoch.toNumber(); i++) {
-            // console.log("loop", i); 
+            // console.log("loop epoch", i); 
             // check all the bitmaps up to the current as its a special case to verify 
             // retrieve bitmap and static acc for the epoch i 
             let [ pastBitmap_i, pastStaticAcc_i ] = await getStaticAccData(accInstance, i); 
