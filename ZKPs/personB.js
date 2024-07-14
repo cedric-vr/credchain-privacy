@@ -1,20 +1,28 @@
 const fs = require('fs');
 
-async function verifyProof() {
-    let { initialize } = await import("zokrates-js");
+async function verifyZKP(proof, vk) {
+    const { initialize } = await import("zokrates-js");
 
     // Initialize ZoKrates
     const zokratesProvider = await initialize();
-
-    // Load proof and verification key from files
-    const proof = JSON.parse(fs.readFileSync('proof.json'));
-    const vk = JSON.parse(fs.readFileSync('verification_key.json'));
 
     // Verify proof
     const isVerified = zokratesProvider.verify(vk, proof);
 
     console.log('Proof:', proof);
     console.log('Is the proof valid?', isVerified);
+
+    // Interpret the result based on the inputs
+    const result = proof.inputs[1];
+    if (result === '0x0000000000000000000000000000000000000000000000000000000000000001') {
+        console.log('>> The Issuance Date is after the Threshold Date.');
+    } else if (result === '0x0000000000000000000000000000000000000000000000000000000000000000') {
+        console.log('>> The Issuance Date is before the Threshold Date and therefore INVALID.');
+    } else {
+        console.log('Unexpected result in proof inputs.');
+    }
+
+    return isVerified;
 }
 
-verifyProof().catch(console.error);
+module.exports = { verifyZKP };

@@ -30,6 +30,13 @@ npx hardhat node
 npx hardhat run scripts/deploy.js
 ```
 
+# Privacy Preserving Mechanisms
+## Zero-Knowledge Proof
+```shell
+npx hardhat test test/testZPK.js
+```
+
+
 # References 
 - [Hardhat Guides](https://hardhat.org/hardhat-runner/docs/guides/project-setup) to compile and deploy smart contracts.
 - [Hardhat Boilerplate Project](https://hardhat.org/tutorial/boilerplate-project) featuring smart contracts and frontend files structure. 

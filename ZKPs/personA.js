@@ -1,20 +1,19 @@
 const util = require("util");
 const fs = require('fs');
 
-async function generateProof() {
+async function generateZKP(degreeIssuanceTimestamp, degreeThresholdTimestamp) {
     let { initialize } = await import("zokrates-js");
     // Initialize ZoKrates
     const zokratesProvider = await initialize();
 
     // Compile ZoKrates program
     const source = `
-def main(private field degreeYear, field thresholdYear) -> bool {
-    field lower_bound = 0;
-
-    bool is_valid = (degreeYear >= lower_bound) && (degreeYear < thresholdYear);
-    return is_valid;
-}
-
+        def main(private field degreeYear, field thresholdYear) -> bool {
+            field lower_bound = 0;
+        
+            bool is_valid = (degreeYear >= lower_bound) && (degreeYear > thresholdYear);
+            return is_valid;
+        }
     `;
     const artifacts = zokratesProvider.compile(source);
 
@@ -22,12 +21,8 @@ def main(private field degreeYear, field thresholdYear) -> bool {
     const keypair = zokratesProvider.setup(artifacts.program);
 
     // Compute witness
-    // const { witness } = zokratesProvider.computeWitness(artifacts, ["2025", "2024"]);
-    const { witness } = zokratesProvider.computeWitness(artifacts, ["1851602800", "1704063600"]);
+    const { witness } = zokratesProvider.computeWitness(artifacts, [degreeIssuanceTimestamp, degreeThresholdTimestamp]);
     console.log('Witness output (is_valid):', witness);
-    // console.log('Witness output:');
-    // console.log(util.inspect(witness, { maxArrayLength: null }));
-
 
     // Generate proof
     const proof = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
@@ -38,6 +33,9 @@ def main(private field degreeYear, field thresholdYear) -> bool {
 
     console.log('Proof generated and saved to proof.json');
     console.log('Verification key saved to verification_key.json');
+
+    return { proof, vk: keypair.vk };
+
 }
 
-generateProof().catch(console.error);
+module.exports = { generateZKP };
