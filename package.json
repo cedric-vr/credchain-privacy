@@ -13,12 +13,13 @@
     "@nomicfoundation/hardhat-toolbox": "^1.0.2",
     "@nomiclabs/hardhat-truffle5": "^2.0.7",
     "@nomiclabs/hardhat-web3": "^2.0.0",
-    "hardhat": "^2.11.1",
+    "hardhat": "^2.22.6",
     "web3": "^1.8.0"
   },
   "dependencies": {
     "big-integer": "^1.6.51",
     "crypto-js": "^4.1.1",
-    "ethereumjs-util": "^7.1.5"
+    "ethereumjs-util": "^7.1.5",
+    "zokrates-js": "^1.1.9"
   }
 }
