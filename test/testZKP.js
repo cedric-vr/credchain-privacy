@@ -130,7 +130,7 @@ describe("DID Registry", function() {
         let proof, vk, credential, credentialHash, sig, epoch, credentialPrime;
 
         it("Issuer generates a ZKP for a credential", async function() {
-            // Case: Issuance Date must be larger than Threshold Date
+            // Case: Issuance Date is larger than Threshold Date
             const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 2010 00:00:00
             const degreeIssuanceTimestamp = "1500000000";   // Unix timestamp: Fri Jul 14 2017 02:40:00
             const result = await generateZKP(degreeIssuanceTimestamp, degreeThresholdTimestamp);
@@ -175,7 +175,7 @@ describe("DID Registry", function() {
         let proof, vk, credential, credentialHash, sig, epoch, credentialPrime;
 
         it("Issuer generates a ZKP for a credential", async function() {
-            // Case: Issuance Date must be larger than Threshold Date
+            // Case: Issuance Date is smaller than Threshold Date
             const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 2010 00:00:00
             const degreeIssuanceTimestamp = "1000000000";   // Unix timestamp: Sun Sep 09 2001 01:46:40
             const result = await generateZKP(degreeIssuanceTimestamp, degreeThresholdTimestamp);
