@@ -127,7 +127,7 @@ describe("DID Registry", function() {
 // ===================================================================================================================
 
     describe("Credential issuance and ZKP verification for correct Issuance Timestamp", function() {
-        let proof, vk;
+        let proof, vk, credential, credentialHash, sig, epoch, credentialPrime;
 
         it("Issuer generates a proof for a credential", async function() {
             // Case: Issuance Date must be larger than Threshold Date
@@ -139,16 +139,40 @@ describe("DID Registry", function() {
 
             assert.isNotNull(proof, "Proof should not be null");
             assert.isNotNull(vk, "Verification key should not be null");
+
+            // Generate credential
+            let [bitmap, hashCount, count, capacity, epoch] = await getBitmapData(subAccInstance);
+            [credential, credentialHash, sig] = await generateCredential('some claim', holder, issuer, "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", epoch.toNumber());
+            [credentialPrime, nonce] = hashToPrime(credentialHash, 128, 0n);
+            storeEpochPrimes(credentialPrime);
+
+            await credRegistryInstance.addCredential(credential.id, credential.issuer, credential.holder, credentialHash, sig, 100, credential.epoch);
+            await credRegistryInstance.getCredential(credential.id).then((result) => {
+                assert.equal(result[1], holder, "the credential holder is the same");
+            });
         });
 
-        it("Verifier verifies the proof", async function() {
+        it("User sends the proof and VK to the verifier", async function() {
+            // Simulate user sending the proof and VK to the verifier
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+            assert.isNotNull(proof, "Proof should not be null when sent");
+            assert.isNotNull(vk, "Verification key should not be null when sent");
+        });
+
+        it("Verifier verifies the proof and checks bitmap", async function() {
             const isVerified = await verifyZKP(proof, vk);
             assert.isTrue(isVerified, "Proof should be valid");
+
+            // Verifier retrieving the bitmap and verify credential exclusion
+            let [currentBitmap, hashCount, count, capacity, currentEpoch] = await getBitmapData(subAccInstance);
+            await checkInclusionBitmap(subAccInstance, currentBitmap, hashCount, credentialPrime).then((result) => {
+                assert.isFalse(result, "the credential is not in bitmap, hence valid");
+            });
         });
     });
 
     describe("Credential issuance and ZKP verification for incorrect Issuance Timestamp", function() {
-        let proof, vk;
+        let proof, vk, credential, credentialHash, sig, epoch, credentialPrime;
 
         it("Issuer generates a proof for a credential", async function() {
             // Case: Issuance Date must be larger than Threshold Date
@@ -160,11 +184,35 @@ describe("DID Registry", function() {
 
             assert.isNotNull(proof, "Proof should not be null");
             assert.isNotNull(vk, "Verification key should not be null");
+
+            // Generate credential
+            let [bitmap, hashCount, count, capacity, epoch] = await getBitmapData(subAccInstance);
+            [credential, credentialHash, sig] = await generateCredential('some claim', holder, issuer, "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", epoch.toNumber());
+            [credentialPrime, nonce] = hashToPrime(credentialHash, 128, 0n);
+            storeEpochPrimes(credentialPrime);
+
+            await credRegistryInstance.addCredential(credential.id, credential.issuer, credential.holder, credentialHash, sig, 100, credential.epoch);
+            await credRegistryInstance.getCredential(credential.id).then((result) => {
+                assert.equal(result[1], holder, "the credential holder is the same");
+            });
         });
 
-        it("Verifier verifies the proof", async function() {
+        it("User sends the proof and VK to the verifier", async function() {
+            // Simulate user sending the proof and VK to the verifier
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+            assert.isNotNull(proof, "Proof should not be null when sent");
+            assert.isNotNull(vk, "Verification key should not be null when sent");
+        });
+
+        it("Verifier verifies the proof and checks bitmap", async function() {
             const isVerified = await verifyZKP(proof, vk);
             assert.isTrue(isVerified, "Proof should be valid");
+
+            // Verifier retrieving the bitmap and verify credential exclusion
+            let [currentBitmap, hashCount, count, capacity, currentEpoch] = await getBitmapData(subAccInstance);
+            await checkInclusionBitmap(subAccInstance, currentBitmap, hashCount, credentialPrime).then((result) => {
+                assert.isFalse(result, "the credential is not in bitmap, hence valid");
+            });
         });
     });
 
