@@ -48,16 +48,19 @@ async function studentMain(degreeIssuanceTimestamp, degreeThresholdTimestamp) {
     const cipherTextResult = seal.CipherText();
     evaluator.sub(cipherTextB, cipherTextA, cipherTextResult);
 
-    // Save the results
-    fs.writeFileSync('studentData.json', JSON.stringify({
+    // Create the JSON object
+    const studentData = {
         parms: parms.save(),
         publicKey: publicKey.save(),
         secretKey: secretKey.save(),
         cipherTextResult: cipherTextResult.save()
-    }));
+    };
 
+    // Save the results to file
+    fs.writeFileSync('studentData.json', JSON.stringify(studentData));
     console.log("File written");
 
+    return studentData;
 
 }
 

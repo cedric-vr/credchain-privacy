@@ -31,11 +31,15 @@ npx hardhat run scripts/deploy.js
 ```
 
 # Privacy Preserving Mechanisms
-## Zero-Knowledge Proof
+## 1) Zero-Knowledge Proof
 ```shell
 npx hardhat test test/testZPK.js
 ```
 
+## 2) Homomorphic Encryption
+```shell
+npx hardhat test test/testHE.js
+```
 
 # References 
 - [Hardhat Guides](https://hardhat.org/hardhat-runner/docs/guides/project-setup) to compile and deploy smart contracts.

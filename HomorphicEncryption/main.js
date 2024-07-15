@@ -5,8 +5,8 @@ const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 20
 const degreeIssuanceTimestamp = "1500000000";   // Unix timestamp: Fri Jul 14 2017 02:40:00
 
 async function main() {
-    await studentMain(degreeIssuanceTimestamp, degreeThresholdTimestamp);
-    await companyMain();
+    const studentData = await studentMain(degreeIssuanceTimestamp, degreeThresholdTimestamp);
+    await companyMain(studentData);
 }
 
 main();

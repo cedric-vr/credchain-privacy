@@ -1,17 +1,12 @@
-async function companyMain() {
+async function companyMain(data) {
     const SEAL = require('node-seal')
     const fs = require('fs');
 
     const seal = await SEAL();
     const securityLevel = seal.SecurityLevel.tc128;
 
-
     // Read out data from .json
-    const data = JSON.parse(fs.readFileSync('studentData.json'));
-    // console.log("Parameters:", data.parms);
-    // console.log("Public Key:", data.publicKey);
-    // console.log("Secret Key:", data.secretKey);
-    // console.log("Ciphertext Result:", data.cipherTextResult);
+    // const data = JSON.parse(fs.readFileSync('studentData.json'));
 
     // Load the context with saved parameters
     const parmsFromFile = seal.EncryptionParameters();
