@@ -6,8 +6,8 @@ const { gen, hashToPrime } = require("../utilities/accumulator.js");
 const { initBitmap, addToBitmap, getBitmapData, getStaticAccData, checkInclusionBitmap, checkInclusionGlobal } = require("../utilities/bitmap.js");
 const { storeEpochPrimes } = require("../utilities/epoch.js");
 const { emptyProducts, emptyStaticAccData } = require("../utilities/product");
-const { generateZKP } = require("../ZKPs/personA");
-const { verifyZKP } = require("../ZKPs/personB.js");
+const { generateZKP } = require("../ZKPs/user.js");
+const { verifyZKP } = require("../ZKPs/verifier.js");
 
 const { verify } = require("../revocation/revocation");
 
