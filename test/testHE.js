@@ -6,7 +6,8 @@ const { gen, hashToPrime } = require("../utilities/accumulator.js");
 const { initBitmap, addToBitmap, getBitmapData, getStaticAccData, checkInclusionBitmap, checkInclusionGlobal } = require("../utilities/bitmap.js");
 const { storeEpochPrimes } = require("../utilities/epoch.js");
 const { emptyProducts, emptyStaticAccData } = require("../utilities/product");
-
+const { studentMain } = require("../HomorphicEncryption/student.js");
+const { companyMain } = require("../HomorphicEncryption/company.js");
 const { verify } = require("../revocation/revocation");
 
 // using the following approach for testing:
@@ -124,7 +125,93 @@ describe("DID Registry", function() {
 
 // ===================================================================================================================
 
+    describe("Credential issuance and homomorphic encryption for correct Issuance Timestamp", function() {
+        let studentData, proof, vk, credential, credentialHash, sig, epoch, credentialPrime;
 
+        it("Issuer performs homomorphic encrypted calculation and sends it to verifier", async function() {
+            // Case: Issuance Date is larger than Threshold Date
+            const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 2010 00:00:00
+            const degreeIssuanceTimestamp = "1500000000";   // Unix timestamp: Fri Jul 14 2017 02:40:00
+
+            studentData = await studentMain(degreeIssuanceTimestamp, degreeThresholdTimestamp);
+
+            assert.isNotNull(studentData, "Encryption parameters should not be null");
+            assert.isNotNull(vk, "Verification key should not be null");
+
+            // Generate credential
+            let [bitmap, hashCount, count, capacity, epoch] = await getBitmapData(subAccInstance);
+            [credential, credentialHash, sig] = await generateCredential('some claim', holder, issuer, "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", epoch.toNumber());
+            [credentialPrime, nonce] = hashToPrime(credentialHash, 128, 0n);
+            storeEpochPrimes(credentialPrime);
+
+            await credRegistryInstance.addCredential(credential.id, credential.issuer, credential.holder, credentialHash, sig, 100, credential.epoch);
+            await credRegistryInstance.getCredential(credential.id).then((result) => {
+                assert.equal(result[1], holder, "the credential holder is the same");
+            });
+        });
+
+        it("User sends the encryption parameters, calculation and VK to the verifier", async function() {
+            // Simulate user sending the proof and VK to the verifier
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+            assert.isNotNull(proof, "Encryption parameters should not be null when sent");
+            assert.isNotNull(vk, "Verification key should not be null when sent");
+        });
+
+        it("Verifier verifies the homomorphic encrypted calculation and checks bitmap", async function() {
+            const isVerified = await companyMain(studentData);
+            assert.isTrue(isVerified, "Degree Issuance Date should be valid");
+
+            // Verifier retrieving the bitmap and verify credential exclusion
+            let [currentBitmap, hashCount, count, capacity, currentEpoch] = await getBitmapData(subAccInstance);
+            await checkInclusionBitmap(subAccInstance, currentBitmap, hashCount, credentialPrime).then((result) => {
+                assert.isFalse(result, "the credential is not in bitmap, hence valid");
+            });
+        });
+    });
+
+    describe("Credential issuance and homomorphic encryption for correct Issuance Timestamp", function() {
+        let studentData, proof, vk, credential, credentialHash, sig, epoch, credentialPrime;
+
+        it("Issuer performs homomorphic encrypted calculation and sends it to verifier", async function() {
+            // Case: Issuance Date is smaller than Threshold Date
+            const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 2010 00:00:00
+            const degreeIssuanceTimestamp = "1000000000";   // Unix timestamp: Sun Sep 09 2001 01:46:40
+
+            studentData = await studentMain(degreeIssuanceTimestamp, degreeThresholdTimestamp);
+
+            assert.isNotNull(studentData, "Encryption parameters should not be null");
+            assert.isNotNull(vk, "Verification key should not be null");
+
+            // Generate credential
+            let [bitmap, hashCount, count, capacity, epoch] = await getBitmapData(subAccInstance);
+            [credential, credentialHash, sig] = await generateCredential('some claim', holder, issuer, "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", epoch.toNumber());
+            [credentialPrime, nonce] = hashToPrime(credentialHash, 128, 0n);
+            storeEpochPrimes(credentialPrime);
+
+            await credRegistryInstance.addCredential(credential.id, credential.issuer, credential.holder, credentialHash, sig, 100, credential.epoch);
+            await credRegistryInstance.getCredential(credential.id).then((result) => {
+                assert.equal(result[1], holder, "the credential holder is the same");
+            });
+        });
+
+        it("User sends the encryption parameters, calculation and VK to the verifier", async function() {
+            // Simulate user sending the proof and VK to the verifier
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+            assert.isNotNull(proof, "Encryption parameters should not be null when sent");
+            assert.isNotNull(vk, "Verification key should not be null when sent");
+        });
+
+        it("Verifier verifies the homomorphic encrypted calculation and checks bitmap", async function() {
+            const isVerified = await companyMain(studentData);
+            assert.isFalse(isVerified, "Degree Issuance Date should be invalid");
+
+            // Verifier retrieving the bitmap and verify credential exclusion
+            let [currentBitmap, hashCount, count, capacity, currentEpoch] = await getBitmapData(subAccInstance);
+            await checkInclusionBitmap(subAccInstance, currentBitmap, hashCount, credentialPrime).then((result) => {
+                assert.isFalse(result, "the credential is not in bitmap, hence valid");
+            });
+        });
+    });
 
 
     describe('User attempts to verify during issuance epoch', function() {

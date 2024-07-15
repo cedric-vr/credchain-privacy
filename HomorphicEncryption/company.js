@@ -36,8 +36,10 @@ async function companyMain(data) {
 
     if (decodedArrayResultFromFile[0] > 0) {
         console.log("INVALID Issuance Date");
+        return false;
     } else {
         console.log("valid Issuance Date");
+        return true;
     }
 
 }
