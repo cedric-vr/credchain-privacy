@@ -129,7 +129,7 @@ describe("DID Registry", function() {
     describe("Credential issuance and ZKP verification for correct Issuance Timestamp", function() {
         let proof, vk, credential, credentialHash, sig, epoch, credentialPrime;
 
-        it("Issuer generates a proof for a credential", async function() {
+        it("Issuer generates a ZKP for a credential", async function() {
             // Case: Issuance Date must be larger than Threshold Date
             const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 2010 00:00:00
             const degreeIssuanceTimestamp = "1500000000";   // Unix timestamp: Fri Jul 14 2017 02:40:00
@@ -152,14 +152,14 @@ describe("DID Registry", function() {
             });
         });
 
-        it("User sends the proof and VK to the verifier", async function() {
+        it("User sends the ZKP and VK to the verifier", async function() {
             // Simulate user sending the proof and VK to the verifier
             await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
             assert.isNotNull(proof, "Proof should not be null when sent");
             assert.isNotNull(vk, "Verification key should not be null when sent");
         });
 
-        it("Verifier verifies the proof and checks bitmap", async function() {
+        it("Verifier verifies the ZKP and checks bitmap", async function() {
             const isVerified = await verifyZKP(proof, vk);
             assert.isTrue(isVerified, "Proof should be valid");
 
@@ -174,7 +174,7 @@ describe("DID Registry", function() {
     describe("Credential issuance and ZKP verification for incorrect Issuance Timestamp", function() {
         let proof, vk, credential, credentialHash, sig, epoch, credentialPrime;
 
-        it("Issuer generates a proof for a credential", async function() {
+        it("Issuer generates a ZKP for a credential", async function() {
             // Case: Issuance Date must be larger than Threshold Date
             const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 2010 00:00:00
             const degreeIssuanceTimestamp = "1000000000";   // Unix timestamp: Sun Sep 09 2001 01:46:40
@@ -197,14 +197,14 @@ describe("DID Registry", function() {
             });
         });
 
-        it("User sends the proof and VK to the verifier", async function() {
+        it("User sends the ZKP and VK to the verifier", async function() {
             // Simulate user sending the proof and VK to the verifier
             await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
             assert.isNotNull(proof, "Proof should not be null when sent");
             assert.isNotNull(vk, "Verification key should not be null when sent");
         });
 
-        it("Verifier verifies the proof and checks bitmap", async function() {
+        it("Verifier verifies the ZKP and checks bitmap", async function() {
             const isVerified = await verifyZKP(proof, vk);
             assert.isTrue(isVerified, "Proof should be valid");
 
