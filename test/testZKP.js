@@ -8,8 +8,9 @@ const { storeEpochPrimes } = require("../utilities/epoch.js");
 const { emptyProducts, emptyStaticAccData } = require("../utilities/product");
 const { generateZKP } = require("../ZKPs/student.js");
 const { verifyZKP } = require("../ZKPs/company.js");
-
 const { verify } = require("../revocation/revocation");
+const pidusage = require('pidusage');
+const { performance, PerformanceObserver } = require('perf_hooks');
 
 // using the following approach for testing:
 // https://hardhat.org/hardhat-runner/docs/other-guides/truffle-testing
@@ -20,6 +21,15 @@ const Admin = artifacts.require("AdminAccounts");
 const Issuer = artifacts.require("IssuerRegistry");
 const SubAcc = artifacts.require("SubAccumulator");
 const Acc = artifacts.require("Accumulator");
+
+// Set up performance observer
+const obs = new PerformanceObserver((items) => {
+    console.log(`Duration: ${items.getEntries()[0].duration.toFixed(2)} ms`);
+    performance.clearMarks();
+});
+obs.observe({ entryTypes: ['measure'] });
+
+const cpuMaxGHz = 4.2; // Maximum clock speed in GHz
 
 
 describe("DID Registry", function() {
@@ -133,7 +143,16 @@ describe("DID Registry", function() {
             // Case: Issuance Date is larger than Threshold Date
             const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 2010 00:00:00
             const degreeIssuanceTimestamp = "1500000000";   // Unix timestamp: Fri Jul 14 2017 02:40:00
+
+            performance.mark("StartUser1");
             const result = await generateZKP(degreeIssuanceTimestamp, degreeThresholdTimestamp);
+            performance.mark("EndUser1");
+            const ZKPmeasureUser1 = performance.measure(
+                "ZKPuser1",
+                "StartUser1",
+                "EndUser1",
+            );
+
             proof = result.proof;
             vk = result.vk;
 
@@ -160,7 +179,15 @@ describe("DID Registry", function() {
         });
 
         it("Verifier verifies the ZKP and checks bitmap", async function() {
+            performance.mark("StartVerifier1");
             const isVerified = await verifyZKP(proof, vk);
+            performance.mark("EndVerifier1");
+            const ZKPmeasureVerifier1 = performance.measure(
+                "ZKPverifier1",
+                "StartVerifier1",
+                "EndVerifier1",
+            );
+
             assert.isTrue(isVerified, "Proof should be valid");
 
             // Verifier retrieving the bitmap and verify credential exclusion
@@ -178,7 +205,16 @@ describe("DID Registry", function() {
             // Case: Issuance Date is smaller than Threshold Date
             const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 2010 00:00:00
             const degreeIssuanceTimestamp = "1000000000";   // Unix timestamp: Sun Sep 09 2001 01:46:40
+
+            performance.mark("StartUser2");
             const result = await generateZKP(degreeIssuanceTimestamp, degreeThresholdTimestamp);
+            performance.mark("EndUser2");
+            const ZKPmeasureUser2 = performance.measure(
+                "ZKPuser2",
+                "StartUser2",
+                "EndUser2",
+            );
+
             proof = result.proof;
             vk = result.vk;
 
@@ -205,7 +241,14 @@ describe("DID Registry", function() {
         });
 
         it("Verifier verifies the ZKP and checks bitmap", async function() {
+            performance.mark("StartVerifier2");
             const isVerified = await verifyZKP(proof, vk);
+            performance.mark("EndVerifier2");
+            const ZKPmeasureVerifier2 = performance.measure(
+                "ZKPverifier2",
+                "StartVerifier2",
+                "EndVerifier2",
+            );
             assert.isTrue(isVerified, "Proof should be valid");
 
             // Verifier retrieving the bitmap and verify credential exclusion
