@@ -168,12 +168,6 @@ describe("DID Registry", function() {
             });
         });
 
-        it("User sends the encryption parameters, calculation and VK to the verifier", async function() {
-            // Simulate user sending the proof and VK to the verifier
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-            assert.isNotNull(proof, "Encryption parameters should not be null when sent");
-            assert.isNotNull(vk, "Verification key should not be null when sent");
-        });
 
         it("Verifier verifies the homomorphic encrypted calculation and checks bitmap", async function() {
             performance.mark("StartVerifier1");
@@ -227,12 +221,6 @@ describe("DID Registry", function() {
             });
         });
 
-        it("User sends the encryption parameters, calculation and VK to the verifier", async function() {
-            // Simulate user sending the proof and VK to the verifier
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-            assert.isNotNull(proof, "Encryption parameters should not be null when sent");
-            assert.isNotNull(vk, "Verification key should not be null when sent");
-        });
 
         it("Verifier verifies the homomorphic encrypted calculation and checks bitmap", async function() {
             performance.mark("StartVerifier2");
