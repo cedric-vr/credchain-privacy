@@ -1,38 +1,39 @@
-const { exec } = require('child_process');
+const { generateZKP } = require("./student.js");
+const { verifyZKP } = require("./company.js");
+
+const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 2010 00:00:00
+const degreeIssuanceTimestamp = "1500000000";   // Unix timestamp: Fri Jul 14 2017 02:40:00
 
 async function main() {
-    const startTime = Date.now();
+    const pidusage = require('pidusage');
+    const { performance, PerformanceObserver } = require('perf_hooks');
 
-    console.log('Student is generating the proof...');
-    exec('node student.js', (error, stdout, stderr) => {
-        if (error) {
-            console.error(`Error executing personA.js: ${error.message}`);
-            return;
-        }
-        if (stderr) {
-            console.error(`stderr from personA.js: ${stderr}`);
-            return;
-        }
-        console.log(`stdout from personA.js: ${stdout}`);
-
-        console.log('-------------------------------------------------------------')
-        console.log('Company is verifying the proof...');
-        exec('node company.js', (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Error executing personB.js: ${error.message}`);
-                return;
-            }
-            if (stderr) {
-                console.error(`stderr from personB.js: ${stderr}`);
-                return;
-            }
-            console.log(`stdout from personB.js: ${stdout}`);
-
-            const endTime = Date.now();
-            const executionTime = (endTime - startTime) / 1000; // Calculate execution time in seconds
-            console.log(`Total execution time: ${executionTime} seconds`);
-        });
+    // Measure time
+    const obs = new PerformanceObserver((items) => {
+        console.log(`Duration: ${items.getEntries()[0].duration} ms`);
+        performance.clearMarks();
     });
+    obs.observe({ entryTypes: ['measure'] });
+
+    // Start time measurement
+    performance.mark('start');
+
+    const { proof, vk } = await generateZKP(degreeIssuanceTimestamp, degreeThresholdTimestamp);
+    const validIssuanceTimestamp = await verifyZKP(proof, vk);
+    console.log("Valid Degree Issuance Timestamp:", validIssuanceTimestamp);
+
+    // End time measurement
+    performance.mark('end');
+    performance.measure('Duration', 'start', 'end');
+
+    // Measure CPU and memory usage
+    pidusage(process.pid, (err, stats) => {
+        if (!err) {
+            console.log(`CPU: ${stats.cpu}%`);
+            console.log(`Memory: ${stats.memory / 1024 / 1024}MB`);
+        }
+    });
+
 }
 
 main().catch(console.error);

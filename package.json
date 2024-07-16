@@ -22,6 +22,7 @@
     "ethereumjs-util": "^7.1.5",
     "node-seal": "^5.1.4",
     "paillier-bigint": "^3.4.3",
+    "pidusage": "^3.0.2",
     "zokrates-js": "^1.1.9"
   }
 }
