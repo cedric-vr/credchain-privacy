@@ -9,6 +9,8 @@ const { emptyProducts, emptyStaticAccData } = require("../utilities/product");
 const { studentMain } = require("../HomorphicEncryption/student.js");
 const { companyMain } = require("../HomorphicEncryption/company.js");
 const { verify } = require("../revocation/revocation");
+const pidusage = require('pidusage');
+const { performance, PerformanceObserver } = require('perf_hooks');
 
 // using the following approach for testing:
 // https://hardhat.org/hardhat-runner/docs/other-guides/truffle-testing
@@ -19,6 +21,15 @@ const Admin = artifacts.require("AdminAccounts");
 const Issuer = artifacts.require("IssuerRegistry");
 const SubAcc = artifacts.require("SubAccumulator");
 const Acc = artifacts.require("Accumulator");
+
+// Set up performance observer
+const obs = new PerformanceObserver((items) => {
+    console.log(`Duration: ${items.getEntries()[0].duration.toFixed(2)} ms`);
+    performance.clearMarks();
+});
+obs.observe({ entryTypes: ['measure'] });
+
+const cpuMaxGHz = 4.2; // Maximum clock speed in GHz
 
 
 describe("DID Registry", function() {
@@ -133,7 +144,14 @@ describe("DID Registry", function() {
             const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 2010 00:00:00
             const degreeIssuanceTimestamp = "1500000000";   // Unix timestamp: Fri Jul 14 2017 02:40:00
 
+            performance.mark("StartUser1");
             studentData = await studentMain(degreeIssuanceTimestamp, degreeThresholdTimestamp);
+            performance.mark("EndUser1");
+            const HEmeasureUser1 = performance.measure(
+                "HEuser1",
+                "StartUser1",
+                "EndUser1",
+            );
 
             assert.isNotNull(studentData, "Encryption parameters should not be null");
             assert.isNotNull(vk, "Verification key should not be null");
@@ -158,7 +176,15 @@ describe("DID Registry", function() {
         });
 
         it("Verifier verifies the homomorphic encrypted calculation and checks bitmap", async function() {
+            performance.mark("StartVerifier1");
             const isVerified = await companyMain(studentData);
+            performance.mark("EndVerifier1");
+            const HEmeasureVerifier1 = performance.measure(
+                "HEverifier1",
+                "StartVerifier1",
+                "EndVerifier1",
+            );
+
             assert.isTrue(isVerified, "Degree Issuance Date should be valid");
 
             // Verifier retrieving the bitmap and verify credential exclusion
@@ -177,7 +203,14 @@ describe("DID Registry", function() {
             const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 2010 00:00:00
             const degreeIssuanceTimestamp = "1000000000";   // Unix timestamp: Sun Sep 09 2001 01:46:40
 
+            performance.mark("StartUser2");
             studentData = await studentMain(degreeIssuanceTimestamp, degreeThresholdTimestamp);
+            performance.mark("EndUser2");
+            const HEmeasureUser2 = performance.measure(
+                "HEuser2",
+                "StartUser2",
+                "EndUser2",
+            );
 
             assert.isNotNull(studentData, "Encryption parameters should not be null");
             assert.isNotNull(vk, "Verification key should not be null");
@@ -202,7 +235,15 @@ describe("DID Registry", function() {
         });
 
         it("Verifier verifies the homomorphic encrypted calculation and checks bitmap", async function() {
+            performance.mark("StartVerifier2");
             const isVerified = await companyMain(studentData);
+            performance.mark("EndVerifier2");
+            const HEmeasureVerifier2 = performance.measure(
+                "HEverifier2",
+                "StartVerifier2",
+                "EndVerifier2",
+            );
+
             assert.isFalse(isVerified, "Degree Issuance Date should be invalid");
 
             // Verifier retrieving the bitmap and verify credential exclusion
