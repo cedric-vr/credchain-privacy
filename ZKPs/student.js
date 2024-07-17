@@ -22,7 +22,7 @@ async function generateZKP(degreeIssuanceTimestamp, degreeThresholdTimestamp) {
 
     // Compute witness
     const { witness } = zokratesProvider.computeWitness(artifacts, [degreeIssuanceTimestamp, degreeThresholdTimestamp]);
-    console.log('Witness output (is_valid):', witness);
+    // console.log('Witness output (is_valid):', witness);
 
     // Generate proof
     const proof = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
@@ -31,8 +31,8 @@ async function generateZKP(degreeIssuanceTimestamp, degreeThresholdTimestamp) {
     fs.writeFileSync('proof.json', JSON.stringify(proof));
     fs.writeFileSync('verification_key.json', JSON.stringify(keypair.vk));
 
-    console.log('Proof generated and saved to proof.json');
-    console.log('Verification key saved to verification_key.json');
+    // console.log('Proof generated and saved to proof.json');
+    // console.log('Verification key saved to verification_key.json');
 
     return { proof, vk: keypair.vk };
 

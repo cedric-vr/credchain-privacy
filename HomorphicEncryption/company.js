@@ -31,8 +31,7 @@ async function companyMain(data) {
 
     // Decode the PlainText Result
     const decodedArrayResultFromFile = encoderFromFile.decode(decryptedPlainTextResultFromFile);
-
-    console.log('Decoded result from file:', decodedArrayResultFromFile[0]);
+    // console.log('Decoded result from file:', decodedArrayResultFromFile[0]);
 
     if (decodedArrayResultFromFile[0] > 0) {
         console.log("INVALID Issuance Date");

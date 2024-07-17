@@ -58,7 +58,7 @@ async function studentMain(degreeIssuanceTimestamp, degreeThresholdTimestamp) {
 
     // Save the results to file
     fs.writeFileSync('studentData.json', JSON.stringify(studentData));
-    console.log("File written");
+    // console.log("File written");
 
     return studentData;
 

@@ -9,8 +9,8 @@ async function verifyZKP(proof, vk) {
     // Verify proof
     const isVerified = zokratesProvider.verify(vk, proof);
 
-    console.log('Proof:', proof);
-    console.log('Is the proof valid?', isVerified);
+    // console.log('Proof:', proof);
+    // console.log('Is the proof valid?', isVerified);
 
     // Interpret the result based on the inputs
     const result = proof.inputs[1];
