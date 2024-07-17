@@ -172,7 +172,7 @@ describe("DID Registry", function() {
         });
 
         it("User sends the ZKP and VK to the verifier", async function() {
-            // Simulate user sending the proof and VK to the verifier
+            // Simulate user sending the proof and VK to the verifier and avoid credential already exists error
             await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
             assert.isNotNull(proof, "Proof should not be null when sent");
             assert.isNotNull(vk, "Verification key should not be null when sent");
@@ -234,7 +234,7 @@ describe("DID Registry", function() {
         });
 
         it("User sends the ZKP and VK to the verifier", async function() {
-            // Simulate user sending the proof and VK to the verifier
+            // Simulate user sending the proof and VK to the verifier, and avoid credential already exists error
             await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
             assert.isNotNull(proof, "Proof should not be null when sent");
             assert.isNotNull(vk, "Verification key should not be null when sent");
