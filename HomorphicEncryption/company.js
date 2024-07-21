@@ -21,28 +21,25 @@ async function companyMain(data) {
     cipherTextBFromFile.load(contextFromFile, data.cipherTextB);
 
     const cipherTextResultFromFile = seal.CipherText();
-    cipherTextResultFromFile.load(contextFromFile, data.cipherTextResult);
+    try {
+        cipherTextResultFromFile.load(contextFromFile, data.cipherTextResult);
+    } catch (error) {
+        // Error occurs for "wrong" format, meaning if the result has been altered
+        console.log("Encrypted results NOT identical");
+        return false;
+    }
 
     // Company performs the same computation
     const evaluatorFromFile = seal.Evaluator(contextFromFile);
     const cipherTextResult = seal.CipherText();
     evaluatorFromFile.sub(cipherTextBFromFile, cipherTextAFromFile, cipherTextResult);
 
-    // Convert ciphertexts to binary for comparison
+    // Convert ciphertexts to strings for comparison
     const companyResultString = cipherTextResult.save();
     const studentResultString = cipherTextResultFromFile.save();
 
-    console.log("Company result length:", companyResultString.length);
-    console.log("Student result length:", studentResultString.length);
-
     // Compare the company's computed encrypted result with the student's encrypted result
     const isResultValid = companyResultString === studentResultString;
-
-    // Save the company's computed encrypted result for debugging purposes
-    const companyData = {
-        cipherTextResult: companyResultString
-    };
-    fs.writeFileSync('companyData.json', JSON.stringify(companyData));
 
     if (isResultValid) {
         console.log("Encrypted results identical");
