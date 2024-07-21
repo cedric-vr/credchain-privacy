@@ -1,7 +1,7 @@
-async function studentMain(degreeIssuanceTimestamp, degreeThresholdTimestamp) {
-    const SEAL = require('node-seal');
-    const fs = require('fs');
+const SEAL = require('node-seal');
+const fs = require('fs');
 
+async function studentMain(degreeIssuanceTimestamp, degreeThresholdTimestamp) {
     const seal = await SEAL();
     const schemeType = seal.SchemeType.bfv;
     const securityLevel = seal.SecurityLevel.tc128;
@@ -32,7 +32,6 @@ async function studentMain(degreeIssuanceTimestamp, degreeThresholdTimestamp) {
     const encoder = seal.BatchEncoder(context);
     const keyGenerator = seal.KeyGenerator(context);
     const publicKey = keyGenerator.createPublicKey();
-    const secretKey = keyGenerator.secretKey();
     const encryptor = seal.Encryptor(context, publicKey);
     const evaluator = seal.Evaluator(context);
 
@@ -52,7 +51,8 @@ async function studentMain(degreeIssuanceTimestamp, degreeThresholdTimestamp) {
     const studentData = {
         parms: parms.save(),
         publicKey: publicKey.save(),
-        secretKey: secretKey.save(),
+        cipherTextA: cipherTextA.save(),
+        cipherTextB: cipherTextB.save(),
         cipherTextResult: cipherTextResult.save()
     };
 
@@ -61,7 +61,6 @@ async function studentMain(degreeIssuanceTimestamp, degreeThresholdTimestamp) {
     // console.log("File written");
 
     return studentData;
-
 }
 
-module.exports = {studentMain};
+module.exports = { studentMain };

@@ -1,12 +1,9 @@
-async function companyMain(data) {
-    const SEAL = require('node-seal')
-    const fs = require('fs');
+const SEAL = require('node-seal');
+const fs = require('fs');
 
+async function companyMain(data) {
     const seal = await SEAL();
     const securityLevel = seal.SecurityLevel.tc128;
-
-    // Read out data from .json
-    // const data = JSON.parse(fs.readFileSync('studentData.json'));
 
     // Load the context with saved parameters
     const parmsFromFile = seal.EncryptionParameters();
@@ -17,30 +14,43 @@ async function companyMain(data) {
     const publicKeyFromFile = seal.PublicKey();
     publicKeyFromFile.load(contextFromFile, data.publicKey);
 
-    const secretKeyFromFile = seal.SecretKey();
-    secretKeyFromFile.load(contextFromFile, data.secretKey);
+    const cipherTextAFromFile = seal.CipherText();
+    cipherTextAFromFile.load(contextFromFile, data.cipherTextA);
+
+    const cipherTextBFromFile = seal.CipherText();
+    cipherTextBFromFile.load(contextFromFile, data.cipherTextB);
 
     const cipherTextResultFromFile = seal.CipherText();
     cipherTextResultFromFile.load(contextFromFile, data.cipherTextResult);
 
-    const decryptorFromFile = seal.Decryptor(contextFromFile, secretKeyFromFile);
-    const encoderFromFile = seal.BatchEncoder(contextFromFile);
+    // Company performs the same computation
+    const evaluatorFromFile = seal.Evaluator(contextFromFile);
+    const cipherTextResult = seal.CipherText();
+    evaluatorFromFile.sub(cipherTextBFromFile, cipherTextAFromFile, cipherTextResult);
 
-    // Decrypt the CipherText Result
-    const decryptedPlainTextResultFromFile = decryptorFromFile.decrypt(cipherTextResultFromFile);
+    // Convert ciphertexts to binary for comparison
+    const companyResultString = cipherTextResult.save();
+    const studentResultString = cipherTextResultFromFile.save();
 
-    // Decode the PlainText Result
-    const decodedArrayResultFromFile = encoderFromFile.decode(decryptedPlainTextResultFromFile);
-    // console.log('Decoded result from file:', decodedArrayResultFromFile[0]);
+    console.log("Company result length:", companyResultString.length);
+    console.log("Student result length:", studentResultString.length);
 
-    if (decodedArrayResultFromFile[0] > 0) {
-        console.log("INVALID Issuance Date");
-        return false;
+    // Compare the company's computed encrypted result with the student's encrypted result
+    const isResultValid = companyResultString === studentResultString;
+
+    // Save the company's computed encrypted result for debugging purposes
+    const companyData = {
+        cipherTextResult: companyResultString
+    };
+    fs.writeFileSync('companyData.json', JSON.stringify(companyData));
+
+    if (isResultValid) {
+        console.log("Encrypted results identical");
     } else {
-        console.log("valid Issuance Date");
-        return true;
+        console.log("Encrypted results NOT identical");
     }
 
+    return isResultValid;
 }
 
-module.exports = {companyMain};
+module.exports = { companyMain };

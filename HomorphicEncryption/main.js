@@ -2,9 +2,10 @@ const { studentMain } = require("./student.js");
 const { companyMain } = require("./company.js");
 const pidusage = require('pidusage');
 const { performance, PerformanceObserver } = require('perf_hooks');
+const fs = require('fs');
 
-const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 2010 00:00:00
-const degreeIssuanceTimestamp = "1500000000";   // Unix timestamp: Fri Jul 14 2017 02:40:00
+const degreeThresholdTimestamp = 1262304000;  // Unix timestamp: Fri Jan 01 2010 00:00:00
+const degreeIssuanceTimestamp = 1500000000;   // Unix timestamp: Fri Jul 14 2017 02:40:00
 
 const cpuMaxGHz = 4.2; // Maximum clock speed in GHz
 
@@ -36,7 +37,7 @@ async function main() {
     performance.mark('end');
     performance.measure('Duration', 'start', 'end');
 
-    console.log(`\nInitial CPU: ${initialStats.cpu}% (${((initialStats.cpu / 100) * cpuMaxGHz.toFixed(2))} GHz)`);
+    console.log(`\nInitial CPU: ${initialStats.cpu}% (${((initialStats.cpu / 100) * cpuMaxGHz).toFixed(2)} GHz)`);
     console.log(`Initial Memory: ${(initialStats.memory / 1024 / 1024).toFixed(2)}MB`);
 
     // Measure final CPU and memory usage
