@@ -75,7 +75,7 @@ async function companyMain(studentData, setupData) {
         cipherTextResultStudent.load(context, studentData.cipherTextResult);
     } catch (error) {
         // Error occurs for "wrong" format, meaning if the result has been altered
-        console.log("Encrypted results NOT identical");
+        console.log("\tEncrypted results NOT identical");
         return false;
     }
 
@@ -92,9 +92,9 @@ async function companyMain(studentData, setupData) {
     const isResultValid = companyResultString === studentResultString;
 
     if (isResultValid) {
-        console.log("Encrypted results identical");
+        console.log("\tEncrypted results identical");
     } else {
-        console.log("Encrypted results NOT identical");
+        console.log("\tEncrypted results NOT identical");
     }
 
     return isResultValid;

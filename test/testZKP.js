@@ -24,7 +24,7 @@ const Acc = artifacts.require("Accumulator");
 
 // Set up performance observer
 const obs = new PerformanceObserver((items) => {
-    console.log(`Duration: ${items.getEntries()[0].duration.toFixed(2)} ms`);
+    console.log(`\tDuration: ${items.getEntries()[0].duration.toFixed(2)} ms`);
     performance.clearMarks();
 });
 obs.observe({ entryTypes: ['measure'] });
@@ -139,7 +139,7 @@ describe("DID Registry", function() {
     describe("Credential issuance and ZKP verification for correct Issuance Timestamp", function() {
         let proof, vk, credential, credentialHash, sig, epoch, credentialPrime;
 
-        it("Issuer generates a ZKP for a credential", async function() {
+        it("Student generates a ZKP for a credential", async function() {
             // Case: Issuance Date is larger than Threshold Date
             const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 2010 00:00:00
             const degreeIssuanceTimestamp = "1500000000";   // Unix timestamp: Fri Jul 14 2017 02:40:00
@@ -171,14 +171,14 @@ describe("DID Registry", function() {
             });
         });
 
-        it("User sends the ZKP and VK to the verifier", async function() {
+        it("Student sends the ZKP and VK to the Company", async function() {
             // Simulate user sending the proof and VK to the verifier and avoid credential already exists error
             await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
             assert.isNotNull(proof, "Proof should not be null when sent");
             assert.isNotNull(vk, "Verification key should not be null when sent");
         });
 
-        it("Verifier verifies the ZKP and checks bitmap", async function() {
+        it("Company verifies the ZKP and checks bitmap", async function() {
             performance.mark("StartVerifier1");
             const isVerified = await verifyZKP(proof, vk);
             performance.mark("EndVerifier1");
@@ -201,7 +201,7 @@ describe("DID Registry", function() {
     describe("Credential issuance and ZKP verification for incorrect Issuance Timestamp", function() {
         let proof, vk, credential, credentialHash, sig, epoch, credentialPrime;
 
-        it("Issuer generates a ZKP for a credential", async function() {
+        it("Student generates a ZKP for a credential", async function() {
             // Case: Issuance Date is smaller than Threshold Date
             const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 2010 00:00:00
             const degreeIssuanceTimestamp = "1000000000";   // Unix timestamp: Sun Sep 09 2001 01:46:40
@@ -233,14 +233,14 @@ describe("DID Registry", function() {
             });
         });
 
-        it("User sends the ZKP and VK to the verifier", async function() {
+        it("Student sends the ZKP and VK to the Company", async function() {
             // Simulate user sending the proof and VK to the verifier, and avoid credential already exists error
             await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
             assert.isNotNull(proof, "Proof should not be null when sent");
             assert.isNotNull(vk, "Verification key should not be null when sent");
         });
 
-        it("Verifier verifies the ZKP and checks bitmap", async function() {
+        it("Company verifies the ZKP and checks bitmap", async function() {
             performance.mark("StartVerifier2");
             const isVerified = await verifyZKP(proof, vk);
             performance.mark("EndVerifier2");

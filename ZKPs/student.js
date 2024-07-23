@@ -1,4 +1,3 @@
-const util = require("util");
 const fs = require('fs');
 
 async function generateZKP(degreeIssuanceTimestamp, degreeThresholdTimestamp) {

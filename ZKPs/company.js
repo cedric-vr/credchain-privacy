@@ -15,11 +15,11 @@ async function verifyZKP(proof, vk) {
     // Interpret the result based on the inputs
     const result = proof.inputs[1];
     if (result === '0x0000000000000000000000000000000000000000000000000000000000000001') {
-        console.log('>> The Issuance Date is after the Threshold Date.');
+        console.log('\tThe Issuance Date is after the Threshold Date.');
     } else if (result === '0x0000000000000000000000000000000000000000000000000000000000000000') {
-        console.log('>> The Issuance Date is before the Threshold Date and therefore INVALID.');
+        console.log('\tThe Issuance Date is before the Threshold Date and therefore INVALID.');
     } else {
-        console.log('Unexpected result in proof inputs.');
+        console.log('\tUnexpected result in proof inputs.');
     }
 
     return isVerified;

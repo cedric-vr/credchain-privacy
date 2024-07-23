@@ -193,7 +193,7 @@ describe("DID Registry", function() {
             assert.isNotNull(vk, "Verification key should not be null when sent");
         });
 
-        it("Verifier re-calculates the encrypted values, verifies if the result is equal and checks bitmap", async function() {
+        it("Company re-calculates the encrypted values, verifies if the result is equal and checks bitmap", async function() {
             performance.mark("StartVerifier1");
             const isVerified = await companyMain(studentData, setupData);
             performance.mark("EndVerifier1");
@@ -273,7 +273,7 @@ describe("DID Registry", function() {
             assert.isNotNull(vk, "Verification key should not be null when sent");
         });
 
-        it("Verifier re-calculates the encrypted values, verifies if the result is equal and checks bitmap", async function() {
+        it("Company re-calculates the encrypted values, verifies if the result is equal and checks bitmap", async function() {
             performance.mark("StartVerifier2");
             const isVerified = await companyMain(studentData, setupData);
             performance.mark("EndVerifier2");
