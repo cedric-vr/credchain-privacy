@@ -1,58 +1,39 @@
 const SEAL = require('node-seal');
 const fs = require('fs');
 
-async function studentMain(degreeIssuanceTimestamp, degreeThresholdTimestamp) {
+async function studentMain(degreeIssuanceTimestamp, setupData) {
     const seal = await SEAL();
-    const schemeType = seal.SchemeType.bfv;
     const securityLevel = seal.SecurityLevel.tc128;
-    const polyModulusDegree = 4096;
-    const bitSizes = [36, 36, 37];
-    const bitSize = 20;
 
-    const parms = seal.EncryptionParameters(schemeType);
+    // Load the context with saved parameters
+    const parmsFromFile = seal.EncryptionParameters();
+    parmsFromFile.load(setupData.parms);
 
-    // Set the PolyModulusDegree
-    parms.setPolyModulusDegree(polyModulusDegree);
+    const contextFromFile = seal.Context(parmsFromFile, true, securityLevel);
 
-    // Create a suitable set of CoeffModulus primes
-    parms.setCoeffModulus(seal.CoeffModulus.Create(polyModulusDegree, Int32Array.from(bitSizes)));
+    const publicKeyFromFile = seal.PublicKey();
+    publicKeyFromFile.load(contextFromFile, setupData.publicKey);
 
-    // Set the PlainModulus to a prime of bitSize 20.
-    parms.setPlainModulus(seal.PlainModulus.Batching(polyModulusDegree, bitSize));
+    const cipherTextFromFile = seal.CipherText();
+    cipherTextFromFile.load(contextFromFile, setupData.cipherText);
 
-    const context = seal.Context(parms, // Encryption Parameters
-        true, // ExpandModChain
-        securityLevel // Enforce a security level
-    );
-
-    if (!context.parametersSet()) {
-        throw new Error('Could not set the parameters in the given context. Please try different encryption parameters.')
-    }
-
-    const encoder = seal.BatchEncoder(context);
-    const keyGenerator = seal.KeyGenerator(context);
-    const publicKey = keyGenerator.createPublicKey();
-    const encryptor = seal.Encryptor(context, publicKey);
-    const evaluator = seal.Evaluator(context);
+    const encoder = seal.BatchEncoder(contextFromFile);
+    const encryptor = seal.Encryptor(contextFromFile, publicKeyFromFile);
+    const evaluator = seal.Evaluator(contextFromFile);
 
     // Encode the numbers
-    const plainTextA = encoder.encode(Int32Array.from([degreeIssuanceTimestamp]));
-    const plainTextB = encoder.encode(Int32Array.from([degreeThresholdTimestamp]));
+    const plainText = encoder.encode(Int32Array.from([degreeIssuanceTimestamp]));
 
     // Encrypt the PlainTexts
-    const cipherTextA = encryptor.encrypt(plainTextA);
-    const cipherTextB = encryptor.encrypt(plainTextB);
+    const cipherText = encryptor.encrypt(plainText);
 
     // Subtract A from B and store it in cipherTextResult
     const cipherTextResult = seal.CipherText();
-    evaluator.sub(cipherTextB, cipherTextA, cipherTextResult);
+    evaluator.sub(cipherTextFromFile, cipherText, cipherTextResult);
 
     // Create the JSON object
     const studentData = {
-        parms: parms.save(),
-        publicKey: publicKey.save(),
-        cipherTextA: cipherTextA.save(),
-        cipherTextB: cipherTextB.save(),
+        cipherText: cipherText.save(),
         cipherTextResult: cipherTextResult.save()
     };
 

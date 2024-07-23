@@ -3,6 +3,7 @@ const { companyMain } = require("./company.js");
 const pidusage = require('pidusage');
 const { performance, PerformanceObserver } = require('perf_hooks');
 const fs = require('fs');
+const {companySetup} = require("./company");
 
 const degreeThresholdTimestamp = 1262304000;  // Unix timestamp: Fri Jan 01 2010 00:00:00
 const degreeIssuanceTimestamp = 1500000000;   // Unix timestamp: Fri Jul 14 2017 02:40:00
@@ -29,8 +30,9 @@ async function main() {
     performance.mark('start');
 
     // Run the functions
-    const studentData = await studentMain(degreeIssuanceTimestamp, degreeThresholdTimestamp);
-    const validIssuanceTimestamp = await companyMain(studentData);
+    const setupData = await companySetup(degreeThresholdTimestamp);
+    const studentData = await studentMain(degreeIssuanceTimestamp, setupData);
+    const validIssuanceTimestamp = await companyMain(studentData, setupData);
     console.log("Valid Degree Issuance Timestamp:", validIssuanceTimestamp);
 
     // End time measurement
