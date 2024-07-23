@@ -45,7 +45,7 @@ async function companySetup(degreeThresholdTimestamp) {
     const companySetupData = {
         parms: parms.save(),
         publicKey: publicKey.save(),
-        cipherText: cipherText.save(),
+        cipherTextThreshold: cipherText.save(),
     };
 
     return companySetupData;
@@ -65,10 +65,10 @@ async function companyMain(studentData, setupData) {
     publicKey.load(context, setupData.publicKey);
 
     const cipherTextThresholdDate = seal.CipherText();
-    cipherTextThresholdDate.load(context, setupData.cipherText);
+    cipherTextThresholdDate.load(context, setupData.cipherTextThreshold);
 
     const cipherTextIssuanceDateStudent = seal.CipherText();
-    cipherTextIssuanceDateStudent.load(context, studentData.cipherText);
+    cipherTextIssuanceDateStudent.load(context, studentData.cipherTextIssuanceDate);
 
     const cipherTextResultStudent = seal.CipherText();
     try {

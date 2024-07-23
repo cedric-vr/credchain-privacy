@@ -15,7 +15,7 @@ async function studentMain(degreeIssuanceTimestamp, setupData) {
     publicKeyFromFile.load(contextFromFile, setupData.publicKey);
 
     const cipherTextFromFile = seal.CipherText();
-    cipherTextFromFile.load(contextFromFile, setupData.cipherText);
+    cipherTextFromFile.load(contextFromFile, setupData.cipherTextThreshold);
 
     const encoder = seal.BatchEncoder(contextFromFile);
     const encryptor = seal.Encryptor(contextFromFile, publicKeyFromFile);
@@ -33,7 +33,7 @@ async function studentMain(degreeIssuanceTimestamp, setupData) {
 
     // Create the JSON object
     const studentData = {
-        cipherText: cipherText.save(),
+        cipherTextIssuanceDate: cipherText.save(),
         cipherTextResult: cipherTextResult.save()
     };
 
