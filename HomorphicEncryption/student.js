@@ -11,15 +11,15 @@ async function studentMain(degreeIssuanceTimestamp, setupData) {
 
     const contextFromFile = seal.Context(parmsFromFile, true, securityLevel);
 
+    const encoder = seal.BatchEncoder(contextFromFile);
+    const encryptor = seal.Encryptor(contextFromFile, publicKeyFromFile);
+    const evaluator = seal.Evaluator(contextFromFile);
+
     const publicKeyFromFile = seal.PublicKey();
     publicKeyFromFile.load(contextFromFile, setupData.publicKey);
 
     const cipherTextFromFile = seal.CipherText();
     cipherTextFromFile.load(contextFromFile, setupData.cipherTextThreshold);
-
-    const encoder = seal.BatchEncoder(contextFromFile);
-    const encryptor = seal.Encryptor(contextFromFile, publicKeyFromFile);
-    const evaluator = seal.Evaluator(contextFromFile);
 
     // Encode the numbers
     const plainText = encoder.encode(Int32Array.from([degreeIssuanceTimestamp]));

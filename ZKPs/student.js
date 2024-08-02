@@ -7,17 +7,15 @@ async function generateZKP(degreeIssuanceTimestamp, degreeThresholdTimestamp) {
 
     // Compile ZoKrates program
     const source = `
-        def main(private field degreeYear, field thresholdYear) -> bool {
-            field lower_bound = 0;
-        
-            bool is_valid = (degreeYear >= lower_bound) && (degreeYear > thresholdYear);
-            return is_valid;
+        def main(private field degreeTimestamp, field thresholdTimestamp) -> bool {
+            return degreeTimestamp > thresholdTimestamp;
         }
     `;
     const artifacts = zokratesProvider.compile(source);
 
     // Setup phase
     const keypair = zokratesProvider.setup(artifacts.program);
+    // console.log(keypair);
 
     // Compute witness
     const { witness } = zokratesProvider.computeWitness(artifacts, [degreeIssuanceTimestamp, degreeThresholdTimestamp]);

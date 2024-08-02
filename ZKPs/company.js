@@ -20,6 +20,7 @@ async function verifyZKP(proof, vk) {
         console.log('\tThe Issuance Date is before the Threshold Date and therefore INVALID.');
     } else {
         console.log('\tUnexpected result in proof inputs.');
+        return false;
     }
 
     return isVerified;

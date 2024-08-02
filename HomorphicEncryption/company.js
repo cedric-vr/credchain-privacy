@@ -20,9 +20,9 @@ async function companySetup(degreeThresholdTimestamp) {
     // Set the PlainModulus to a prime of bitSize 20.
     parms.setPlainModulus(seal.PlainModulus.Batching(polyModulusDegree, bitSize));
 
-    const context = seal.Context(parms, // Encryption Parameters
-        true, // ExpandModChain
-        securityLevel // Enforce a security level
+    const context = seal.Context(parms,   // Encryption Parameters
+        true,                       // ExpandModChain
+        securityLevel                             // Enforce security level
     );
 
     if (!context.parametersSet()) {
@@ -33,7 +33,6 @@ async function companySetup(degreeThresholdTimestamp) {
     const keyGenerator = seal.KeyGenerator(context);
     const publicKey = keyGenerator.createPublicKey();
     const encryptor = seal.Encryptor(context, publicKey);
-    const evaluator = seal.Evaluator(context);
 
     // Encode the numbers
     const plainText = encoder.encode(Int32Array.from([degreeThresholdTimestamp]));
@@ -75,7 +74,7 @@ async function companyMain(studentData, setupData) {
         cipherTextResultStudent.load(context, studentData.cipherTextResult);
     } catch (error) {
         // Error occurs for "wrong" format, meaning if the result has been altered
-        console.log("\tEncrypted results NOT identical");
+        console.log("\tIncompatible cipher text format.");
         return false;
     }
 
