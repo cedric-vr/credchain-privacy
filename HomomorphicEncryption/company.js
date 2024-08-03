@@ -47,6 +47,9 @@ async function companySetup(degreeThresholdTimestamp) {
         cipherTextThreshold: cipherText.save(),
     };
 
+    // Save the results to file
+    fs.writeFileSync('./HomomorphicEncryption/companySetupData.json', JSON.stringify(companySetupData));
+
     return companySetupData;
 }
 

@@ -6,12 +6,12 @@ const { gen, hashToPrime } = require("../utilities/accumulator.js");
 const { initBitmap, addToBitmap, getBitmapData, getStaticAccData, checkInclusionBitmap, checkInclusionGlobal } = require("../utilities/bitmap.js");
 const { storeEpochPrimes } = require("../utilities/epoch.js");
 const { emptyProducts, emptyStaticAccData } = require("../utilities/product");
-const { studentMain } = require("../HomorphicEncryption/student.js");
-const { companyMain } = require("../HomorphicEncryption/company.js");
+const { studentMain } = require("../HomomorphicEncryption/student.js");
+const { companyMain } = require("../HomomorphicEncryption/company.js");
 const { verify } = require("../revocation/revocation");
 const pidusage = require('pidusage');
 const { performance, PerformanceObserver } = require('perf_hooks');
-const {companySetup} = require("../HomorphicEncryption/company");
+const {companySetup} = require("../HomomorphicEncryption/company");
 
 // using the following approach for testing:
 // https://hardhat.org/hardhat-runner/docs/other-guides/truffle-testing

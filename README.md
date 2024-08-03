@@ -31,13 +31,12 @@ For each deployed contract we also need to add contract ABI and its address in `
 ```shell
 npx hardhat help
 npx hardhat test
-GAS_REPORT=true npx hardhat test
 npx hardhat node
 npx hardhat run scripts/deploy.js
 ```
 
 # Privacy Preserving Mechanisms
-This repo includes two privacy preserving mechanism prototypes to calculate and verify that a university degree has been issued after a specific date (unix timestamp). 
+This repo includes two privacy preserving mechanism prototypes to calculate and verify that a university degree has been issued after a specific date (Unix timestamp). 
 
 ## 1) Zero-Knowledge Proof
 ```shell
@@ -48,6 +47,11 @@ npx hardhat test test/testZPK.js
 ```shell
 npx hardhat test test/testHE.js
 ```
+
+# Gas Estimation
+...
+
+
 
 # References 
 - [Hardhat Guides](https://hardhat.org/hardhat-runner/docs/guides/project-setup) to compile and deploy smart contracts.

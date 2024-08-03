@@ -38,8 +38,7 @@ async function studentMain(degreeIssuanceTimestamp, setupData) {
     };
 
     // Save the results to file
-    fs.writeFileSync('studentData.json', JSON.stringify(studentData));
-    // console.log("File written");
+    fs.writeFileSync('./HomomorphicEncryption/studentData.json', JSON.stringify(studentData));
 
     return studentData;
 }

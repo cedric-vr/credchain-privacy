@@ -25,11 +25,8 @@ async function generateZKP(degreeIssuanceTimestamp, degreeThresholdTimestamp) {
     const proof = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
 
     // Save proof and verification key to a file
-    fs.writeFileSync('proof.json', JSON.stringify(proof));
-    fs.writeFileSync('verification_key.json', JSON.stringify(keypair.vk));
-
-    // console.log('Proof generated and saved to proof.json');
-    // console.log('Verification key saved to verification_key.json');
+    fs.writeFileSync('./ZKP/proof.json', JSON.stringify(proof));
+    fs.writeFileSync('./ZKP/verificationKey.json', JSON.stringify(keypair.vk));
 
     return { proof, vk: keypair.vk };
 
