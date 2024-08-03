@@ -36,7 +36,7 @@ npx hardhat run scripts/deploy.js
 ```
 
 # Privacy Preserving Mechanisms
-This repo includes two privacy preserving mechanism prototypes to calculate and verify that a university degree has been issued after a specific date (Unix timestamp). 
+This repo includes two privacy preserving mechanism prototypes to calculate and verify that a university degree has been issued after a specific date (Unix timestamp). Run the commands in the upmost folder of the repo.
 
 ## 1) Zero-Knowledge Proof
 ```shell
@@ -49,8 +49,10 @@ npx hardhat test test/testHE.js
 ```
 
 # Gas Estimation
-...
-
+After running the above two privacy-preserving mechanism tests, you can run the following command to output the estimated gas cost of sending the files which were generated during their process.
+```shell
+node utilities/gasEstimator.js
+```
 
 
 # References 
