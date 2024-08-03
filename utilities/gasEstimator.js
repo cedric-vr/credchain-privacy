@@ -3,7 +3,7 @@ const { ethers } = require('ethers');
 const path = require('path');
 
 const ETH_PRICE_IN_USD = 3200;  // Price of 1 ETH in USD
-const GAS_PRICE_GWEI = 20;      // Default gas price in Gwei
+const GAS_PRICE_GWEI = 15;      // Default gas price in Gwei
 const storeOnChain = false;
 
 const paths = [

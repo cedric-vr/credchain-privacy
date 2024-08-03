@@ -4,9 +4,9 @@ The project consists of mainly two parts at the moment: backend including smart 
 
 # How to Run
 
-First, we need to compile and deploy smart contracts to the testnet. To do this, make sure Hardhat is installed on your environment or install using: 
+First, we need to compile and deploy smart contracts to the testnet. To do this, make sure all dependencies is installed on your environment or install using: 
 ```shell
-npm install --save-dev hardhat
+npm install -f
 ```
 To deploy, start the hardhat node with:
 ```shell
@@ -40,7 +40,7 @@ This repo includes two privacy preserving mechanism prototypes to calculate and 
 
 ## 1) Zero-Knowledge Proof
 ```shell
-npx hardhat test test/testZPK.js
+npx hardhat test test/testZKP.js
 ```
 
 ## 2) Homomorphic Encryption
