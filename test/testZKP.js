@@ -22,9 +22,11 @@ const Issuer = artifacts.require("IssuerRegistry");
 const SubAcc = artifacts.require("SubAccumulator");
 const Acc = artifacts.require("Accumulator");
 
+const ArrowDown = '\u2193';
+
 // Set up performance observer
 const obs = new PerformanceObserver((items) => {
-    console.log(`\tDuration: ${items.getEntries()[0].duration.toFixed(2)} ms`);
+    console.log(`\tDuration: ${items.getEntries()[0].duration.toFixed(2)} ms ${ArrowDown}`);
     performance.clearMarks();
 });
 obs.observe({ entryTypes: ['measure'] });

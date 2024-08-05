@@ -8,43 +8,70 @@ const degreeIssuanceTimestamp = "1500000000";   // Unix timestamp: Fri Jul 14 20
 
 const cpuMaxGHz = 4.2; // Maximum clock speed in GHz
 
+async function measureFunctionExecution(func, label, ...args) {
+    performance.mark(`${label}-start`);
+    const result = await func(...args);
+    performance.mark(`${label}-end`);
+    performance.measure(label, `${label}-start`, `${label}-end`);
+    const { cpu, memory } = await pidusage(process.pid);
+    const duration = performance.getEntriesByName(label)[0].duration;
+    performance.clearMarks();
+    performance.clearMeasures();
+    return { cpu, memory, duration, result };
+}
+
+function calculateStats(values) {
+    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+    const max = Math.max(...values);
+    const min = Math.min(...values);
+    return { avg, max, min };
+}
+
 async function main() {
-    // Set up performance observer
-    const obs = new PerformanceObserver((items) => {
-        console.log(`Duration: ${items.getEntries()[0].duration} ms`);
-        performance.clearMarks();
-    });
+    const obs = new PerformanceObserver((items) => {});
     obs.observe({ entryTypes: ['measure'] });
 
-    // Measure initial CPU and memory usage
     let initialStats = await pidusage(process.pid);
 
-    // Start time measurement
-    performance.mark('start');
+    const runs = 10;
+    let generateZKPStats = [];
+    let verifyZKPStats = [];
 
-    // Run the functions
-    const { proof, vk } = await generateZKP(degreeIssuanceTimestamp, degreeThresholdTimestamp);
-    const validIssuanceTimestamp = await verifyZKP(proof, vk);
-    console.log("Valid Degree Issuance Timestamp:", validIssuanceTimestamp);
+    for (let i = 0; i < runs; i++) {
+        console.log(`Run ${i}/${runs}:`);
 
-    // End time measurement
-    performance.mark('end');
-    performance.measure('Duration', 'start', 'end');  // logs duration
+        const generateStats = await measureFunctionExecution(generateZKP, 'generateZKP', degreeIssuanceTimestamp, degreeThresholdTimestamp);
+        generateZKPStats.push(generateStats);
 
-    console.log(`\nInitial CPU: ${initialStats.cpu}% (${((initialStats.cpu / 100) * cpuMaxGHz.toFixed(2))} GHz)`);
-    console.log(`Initial Memory: ${(initialStats.memory / 1024 / 1024).toFixed(2)}MB`);
+        const verifyStats = await measureFunctionExecution(verifyZKP, 'verifyZKP', generateStats.result.proof, generateStats.result.vk);
+        verifyZKPStats.push(verifyStats);
+    }
 
-    // Measure final CPU and memory usage
-    let finalStats = await pidusage(process.pid);
-    console.log(`Final CPU: ${finalStats.cpu.toFixed(2)}% (${((finalStats.cpu / 100) * cpuMaxGHz).toFixed(2)} GHz)`);
-    console.log(`Final Memory: ${(finalStats.memory / 1024 / 1024).toFixed(2)}MB`);
+    const generateZKPCPU = generateZKPStats.map(stat => stat.cpu);
+    const generateZKPMemory = generateZKPStats.map(stat => stat.memory);
+    const generateZKPDuration = generateZKPStats.map(stat => stat.duration);
 
-    // Average CPU and memory usage
-    let averageCPUUsage = (initialStats.cpu + finalStats.cpu) / 2;
-    let averageMemoryUsage = (initialStats.memory + finalStats.memory) / 2 / 1024 / 1024;
+    const verifyZKPCPU = verifyZKPStats.map(stat => stat.cpu);
+    const verifyZKPMemory = verifyZKPStats.map(stat => stat.memory);
+    const verifyZKPDuration = verifyZKPStats.map(stat => stat.duration);
 
-    console.log(`Average CPU: ${averageCPUUsage.toFixed(2)}% (${((averageCPUUsage / 100) * cpuMaxGHz).toFixed(2)} GHz)`);
-    console.log(`Average Memory: ${averageMemoryUsage.toFixed(2)}MB`);
+    const generateZKPCPUStats = calculateStats(generateZKPCPU);
+    const generateZKPMemoryStats = calculateStats(generateZKPMemory);
+    const generateZKPDurationStats = calculateStats(generateZKPDuration);
+
+    const verifyZKPCPUStats = calculateStats(verifyZKPCPU);
+    const verifyZKPMemoryStats = calculateStats(verifyZKPMemory);
+    const verifyZKPDurationStats = calculateStats(verifyZKPDuration);
+
+    console.log("\nGenerateZKP Stats:");
+    console.log(`CPU:\n\tAvg: ${generateZKPCPUStats.avg.toFixed(2)}%, Max: ${generateZKPCPUStats.max.toFixed(2)}%, Min: ${generateZKPCPUStats.min.toFixed(2)}%`);
+    console.log(`Memory:\n\tAvg: ${(generateZKPMemoryStats.avg / 1024 / 1024).toFixed(2)}MB, Max: ${(generateZKPMemoryStats.max / 1024 / 1024).toFixed(2)}MB, Min: ${(generateZKPMemoryStats.min / 1024 / 1024).toFixed(2)}MB`);
+    console.log(`Duration:\n\tAvg: ${generateZKPDurationStats.avg.toFixed(2)}ms, Max: ${generateZKPDurationStats.max.toFixed(2)}ms, Min: ${generateZKPDurationStats.min.toFixed(2)}ms`);
+
+    console.log("\nVerifyZKP Stats:");
+    console.log(`CPU:\n\tAvg: ${verifyZKPCPUStats.avg.toFixed(2)}%, Max: ${verifyZKPCPUStats.max.toFixed(2)}%, Min: ${verifyZKPCPUStats.min.toFixed(2)}%`);
+    console.log(`Memory:\n\tAvg: ${(verifyZKPMemoryStats.avg / 1024 / 1024).toFixed(2)}MB, Max: ${(verifyZKPMemoryStats.max / 1024 / 1024).toFixed(2)}MB, Min: ${(verifyZKPMemoryStats.min / 1024 / 1024).toFixed(2)}MB`);
+    console.log(`Duration:\n\tAvg: ${verifyZKPDurationStats.avg.toFixed(2)}ms, Max: ${verifyZKPDurationStats.max.toFixed(2)}ms, Min: ${verifyZKPDurationStats.min.toFixed(2)}ms`);
 }
 
 main().catch(console.error);
