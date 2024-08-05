@@ -30,13 +30,13 @@ function calculateStats(values) {
     return { avg: Number(avg.toFixed(2)), max: Number(max.toFixed(2)), min: Number(min.toFixed(2)) };
 }
 
-async function main() {
+async function HEperformance(runs) {
+    console.log("Running Homomorphic Encryption Performance Test.")
     const obs = new PerformanceObserver((items) => {});
     obs.observe({ entryTypes: ['measure'] });
 
     let initialStats = await pidusage(process.pid);
 
-    const runs = 30;
     let companySetupStats = [];
     let studentMainStats = [];
     let companyMainStats = [];
@@ -114,8 +114,9 @@ async function main() {
     const json2csvParser = new Parser({ fields });
     const csv = json2csvParser.parse(csvData);
 
-    fs.writeFileSync('HE_performance_data.csv', csv);
+    fs.writeFileSync('./evaluation/HE_performance_data.csv', csv);
     console.log('Performance data saved to HE_performance_data.csv');
 }
 
-main().catch(console.error);
+// HEperformance().catch(console.error);
+module.exports = { HE_performance: HEperformance };

@@ -1,14 +1,12 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# Load the new CSV files for ZKP and HE performance data
-new_zkp_file_path = '../ZKP/ZKP_performance_data.csv'
-new_he_file_path = '../HomomorphicEncryption/HE_performance_data.csv'
+new_zkp_file_path = './evaluation/ZKP_performance_data.csv'
+new_he_file_path = './evaluation/HE_performance_data.csv'
 
 new_zkp_data = pd.read_csv(new_zkp_file_path)
 new_he_data = pd.read_csv(new_he_file_path)
 
-# Display the first few rows of each new dataset to understand their structure
 new_zkp_data_head = new_zkp_data.head()
 new_he_data_head = new_he_data.head()
 
@@ -26,7 +24,6 @@ new_he_metrics.columns = ['SetupCPU', 'SetupMemory', 'SetupDuration',
                           'CalculationCPU', 'CalculationMemory', 'CalculationDuration',
                           'VerificationCPU', 'VerificationMemory', 'VerificationDuration']
 
-# Create separate box plots for CPU, Memory, and Duration and save them
 # CPU Usage Comparison
 plt.figure(figsize=(10, 6))
 plt.boxplot([new_zkp_metrics['GenCPU'], new_zkp_metrics['VerCPU'], new_he_metrics['SetupCPU'],
@@ -37,9 +34,9 @@ plt.boxplot([new_zkp_metrics['GenCPU'], new_zkp_metrics['VerCPU'], new_he_metric
 plt.title('CPU Usage Comparison')
 plt.ylabel('CPU Usage (%)')
 plt.tight_layout()
-# cpu_plot_path = '/mnt/data/cpu_usage_comparison.png'
-plt.savefig("cpu_usage_comparison.png")
+plt.savefig("./evaluation/cpu_usage_comparison.png")
 plt.show()
+
 
 # Memory Usage Comparison
 plt.figure(figsize=(10, 6))
@@ -50,9 +47,9 @@ plt.boxplot([new_zkp_metrics['GenMemory'], new_zkp_metrics['VerMemory'], new_he_
 plt.title('Memory Usage Comparison')
 plt.ylabel('Memory Usage (MB)')
 plt.tight_layout()
-# memory_plot_path = '/mnt/data/memory_usage_comparison.png'
-plt.savefig("memory_usage_comparison.png")
+plt.savefig("./evaluation/memory_usage_comparison.png")
 plt.show()
+
 
 # Duration Comparison
 plt.figure(figsize=(10, 6))
@@ -63,8 +60,6 @@ plt.boxplot([new_zkp_metrics['GenDuration'], new_zkp_metrics['VerDuration'], new
 plt.title('Duration Comparison')
 plt.ylabel('Duration (ms)')
 plt.tight_layout()
-# duration_plot_path = '/mnt/data/duration_comparison.png'
-plt.savefig("duration_comparison.png")
+plt.savefig("./evaluation/duration_comparison.png")
 plt.show()
 
-# cpu_plot_path, memory_plot_path, duration_plot_path

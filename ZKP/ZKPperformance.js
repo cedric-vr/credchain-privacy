@@ -29,13 +29,13 @@ function calculateStats(values) {
     return { avg: Number(avg.toFixed(2)), max: Number(max.toFixed(2)), min: Number(min.toFixed(2)) };
 }
 
-async function main() {
+async function ZKPperformance(runs) {
+    console.log("Running Zero-Knowledge Proof Performance Test.")
     const obs = new PerformanceObserver((items) => {});
     obs.observe({ entryTypes: ['measure'] });
 
     let initialStats = await pidusage(process.pid);
 
-    const runs = 30;
     let generateZKPStats = [];
     let verifyZKPStats = [];
 
@@ -93,8 +93,9 @@ async function main() {
     const json2csvParser = new Parser({ fields });
     const csv = json2csvParser.parse(csvData);
 
-    fs.writeFileSync('ZKP_performance_data.csv', csv);
+    fs.writeFileSync('./evaluation/ZKP_performance_data.csv', csv);
     console.log('Performance data saved to ZKP_performance_data.csv');
 }
 
-main().catch(console.error);
+// ZKPperformance().catch(console.error);
+module.exports = { ZKP_performance: ZKPperformance };
