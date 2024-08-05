@@ -21,6 +21,7 @@
     "crypto-js": "^4.1.1",
     "ethereumjs-util": "^7.1.5",
     "ethers": "^6.13.2",
+    "json2csv": "^6.0.0-alpha.2",
     "node-seal": "^5.1.4",
     "paillier-bigint": "^3.4.3",
     "pidusage": "^3.0.2",

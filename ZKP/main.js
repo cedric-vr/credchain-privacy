@@ -2,6 +2,8 @@ const { generateZKP } = require("./student.js");
 const { verifyZKP } = require("./company.js");
 const pidusage = require('pidusage');
 const { performance, PerformanceObserver } = require('perf_hooks');
+const fs = require('fs');
+const { Parser } = require('json2csv');
 
 const degreeThresholdTimestamp = "1262304000";  // Unix timestamp: Fri Jan 01 2010 00:00:00
 const degreeIssuanceTimestamp = "1500000000";   // Unix timestamp: Fri Jul 14 2017 02:40:00
@@ -17,14 +19,14 @@ async function measureFunctionExecution(func, label, ...args) {
     const duration = performance.getEntriesByName(label)[0].duration;
     performance.clearMarks();
     performance.clearMeasures();
-    return { cpu, memory, duration, result };
+    return { cpu: Number(cpu.toFixed(2)), memory: Number((memory / 1024 / 1024).toFixed(2)), duration: Number(duration.toFixed(2)), result };
 }
 
 function calculateStats(values) {
     const avg = values.reduce((a, b) => a + b, 0) / values.length;
     const max = Math.max(...values);
     const min = Math.min(...values);
-    return { avg, max, min };
+    return { avg: Number(avg.toFixed(2)), max: Number(max.toFixed(2)), min: Number(min.toFixed(2)) };
 }
 
 async function main() {
@@ -33,12 +35,12 @@ async function main() {
 
     let initialStats = await pidusage(process.pid);
 
-    const runs = 10;
+    const runs = 30;
     let generateZKPStats = [];
     let verifyZKPStats = [];
 
     for (let i = 0; i < runs; i++) {
-        console.log(`Run ${i}/${runs}:`);
+        console.log(`Run ${i + 1}/${runs}:`);
 
         const generateStats = await measureFunctionExecution(generateZKP, 'generateZKP', degreeIssuanceTimestamp, degreeThresholdTimestamp);
         generateZKPStats.push(generateStats);
@@ -64,14 +66,35 @@ async function main() {
     const verifyZKPDurationStats = calculateStats(verifyZKPDuration);
 
     console.log("\nGenerateZKP Stats:");
-    console.log(`CPU:\n\tAvg: ${generateZKPCPUStats.avg.toFixed(2)}%, Max: ${generateZKPCPUStats.max.toFixed(2)}%, Min: ${generateZKPCPUStats.min.toFixed(2)}%`);
-    console.log(`Memory:\n\tAvg: ${(generateZKPMemoryStats.avg / 1024 / 1024).toFixed(2)}MB, Max: ${(generateZKPMemoryStats.max / 1024 / 1024).toFixed(2)}MB, Min: ${(generateZKPMemoryStats.min / 1024 / 1024).toFixed(2)}MB`);
-    console.log(`Duration:\n\tAvg: ${generateZKPDurationStats.avg.toFixed(2)}ms, Max: ${generateZKPDurationStats.max.toFixed(2)}ms, Min: ${generateZKPDurationStats.min.toFixed(2)}ms`);
+    console.log(`CPU:\n\tAvg: ${generateZKPCPUStats.avg}%, Max: ${generateZKPCPUStats.max}%, Min: ${generateZKPCPUStats.min}%`);
+    console.log(`Memory:\n\tAvg: ${generateZKPMemoryStats.avg}MB, Max: ${generateZKPMemoryStats.max}MB, Min: ${generateZKPMemoryStats.min}MB`);
+    console.log(`Duration:\n\tAvg: ${generateZKPDurationStats.avg}ms, Max: ${generateZKPDurationStats.max}ms, Min: ${generateZKPDurationStats.min}ms`);
 
     console.log("\nVerifyZKP Stats:");
-    console.log(`CPU:\n\tAvg: ${verifyZKPCPUStats.avg.toFixed(2)}%, Max: ${verifyZKPCPUStats.max.toFixed(2)}%, Min: ${verifyZKPCPUStats.min.toFixed(2)}%`);
-    console.log(`Memory:\n\tAvg: ${(verifyZKPMemoryStats.avg / 1024 / 1024).toFixed(2)}MB, Max: ${(verifyZKPMemoryStats.max / 1024 / 1024).toFixed(2)}MB, Min: ${(verifyZKPMemoryStats.min / 1024 / 1024).toFixed(2)}MB`);
-    console.log(`Duration:\n\tAvg: ${verifyZKPDurationStats.avg.toFixed(2)}ms, Max: ${verifyZKPDurationStats.max.toFixed(2)}ms, Min: ${verifyZKPDurationStats.min.toFixed(2)}ms`);
+    console.log(`CPU:\n\tAvg: ${verifyZKPCPUStats.avg}%, Max: ${verifyZKPCPUStats.max}%, Min: ${verifyZKPCPUStats.min}%`);
+    console.log(`Memory:\n\tAvg: ${verifyZKPMemoryStats.avg}MB, Max: ${verifyZKPMemoryStats.max}MB, Min: ${verifyZKPMemoryStats.min}MB`);
+    console.log(`Duration:\n\tAvg: ${verifyZKPDurationStats.avg}ms, Max: ${verifyZKPDurationStats.max}ms, Min: ${verifyZKPDurationStats.min}ms`);
+
+    // Prepare data for CSV
+    const csvData = [];
+    for (let i = 0; i < runs; i++) {
+        csvData.push({
+            run: i + 1,
+            generateZKPCPU: generateZKPCPU[i],
+            generateZKPMemory: generateZKPMemory[i],
+            generateZKPDuration: generateZKPDuration[i],
+            verifyZKPCPU: verifyZKPCPU[i],
+            verifyZKPMemory: verifyZKPMemory[i],
+            verifyZKPDuration: verifyZKPDuration[i]
+        });
+    }
+
+    const fields = ['run', 'generateZKPCPU', 'generateZKPMemory', 'generateZKPDuration', 'verifyZKPCPU', 'verifyZKPMemory', 'verifyZKPDuration'];
+    const json2csvParser = new Parser({ fields });
+    const csv = json2csvParser.parse(csvData);
+
+    fs.writeFileSync('ZKP_performance_data.csv', csv);
+    console.log('Performance data saved to ZKP_performance_data.csv');
 }
 
 main().catch(console.error);
