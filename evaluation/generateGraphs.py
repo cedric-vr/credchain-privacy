@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 
 new_zkp_file_path = './evaluation/ZKP_performance_data.csv'
 new_he_file_path = './evaluation/HE_performance_data.csv'
@@ -29,13 +30,12 @@ def filter_non_zero(data):
 
 
 def plot_comparison(data, labels, title, y_label, filename):
-    plt.figure(figsize=(10, 6))
-    plt.boxplot(data, labels=labels)
-    plt.title(title)
-    plt.ylabel(y_label)
-    plt.ylim(bottom=0)
-    plt.grid(axis='y', linestyle=':', linewidth=0.5)  # Add dotted horizontal grid lines
-    plt.tight_layout()
+    fig, ax = plt.subplots(figsize=(10, 8))
+    ax.boxplot(data, labels=labels)
+    ax.set_title(title)
+    ax.set_ylabel(y_label)
+    ax.set_ylim(bottom=0)
+    ax.grid(axis='y', linestyle=':', linewidth=0.5)  # Add dotted horizontal grid lines
 
     # Increase the number of y-axis ticks
     ax = plt.gca()
@@ -47,6 +47,30 @@ def plot_comparison(data, labels, title, y_label, filename):
     new_y_ticks.append(y_ticks[-1])
     ax.set_yticks(new_y_ticks)
 
+    # Calculate statistics
+    max_vals = [np.max(d) for d in data]
+    avg_vals = [np.mean(d) for d in data]
+    med_vals = [np.median(d) for d in data]
+    min_vals = [np.min(d) for d in data]
+
+    # Create the table
+    table_data = [
+        ["MAX"] + [f"{val:.2f}" for val in max_vals],
+        ["AVG"] + [f"{val:.2f}" for val in avg_vals],
+        ["MEDIAN"] + [f"{val:.2f}" for val in med_vals],
+        ["MIN"] + [f"{val:.2f}" for val in min_vals],
+    ]
+
+    n_columns = len(labels) + 1
+    col_widths = [0.09] + [0.91 / (n_columns - 1)] * (n_columns - 1)  # Adjust column widths
+
+    table = plt.table(cellText=table_data, loc='bottom', cellLoc='center',
+                      colWidths=col_widths, bbox=[-0.1, -0.35, 1.1, 0.25])
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+
+    plt.subplots_adjust(left=0.2, bottom=0.4)
+    plt.tight_layout(rect=[1, 0.1, 1, 0.95])
     plt.savefig(f"./evaluation/{filename}.png")
     plt.show()
 
