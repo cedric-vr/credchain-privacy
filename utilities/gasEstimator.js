@@ -65,18 +65,18 @@ function estimateGas(filePath, ethPriceInUsd = ETH_PRICE_IN_USD, gasPriceGwei = 
         }
 
         // Convert gas price from Gwei to ETH
-        const gasPriceEth = ethers.parseUnits(gasPriceGwei.toString(), 'gwei');
+        const gasPriceEth = ethers.utils.parseUnits(gasPriceGwei.toString(), 'gwei');
 
         // Calculate gas cost in ETH and USD
-        const gasCostEth = gasPriceEth * BigInt(totalGas);
-        const gasCostUsd = parseFloat(ethers.formatUnits(gasCostEth, 'ether')) * ethPriceInUsd;
+        const gasCostEth = gasPriceEth.mul(ethers.BigNumber.from(totalGas));
+        const gasCostUsd = parseFloat(ethers.utils.formatUnits(gasCostEth, 'ether')) * ethPriceInUsd;
 
         console.log("==========================================================")
         console.log(`File name: ${displayPath}`);
         console.log(`Data size: ${dataSizeKilobytes.toFixed(2)} KB (${dataSizeBytes} bytes)`);
 
         console.log(`Estimated Gas Used: ${totalGas} gas`);
-        console.log(`Estimated Gas Cost: ${ethers.formatUnits(gasCostEth, 'ether')} ETH`);
+        console.log(`Estimated Gas Cost: ${ethers.utils.formatUnits(gasCostEth, 'ether')} ETH`);
         console.log(`Estimated Gas Cost in USD: $${gasCostUsd.toFixed(2)}\n`);
 
     } catch (error) {
