@@ -24,10 +24,18 @@ async function measureFunctionExecution(func, label, ...args) {
 }
 
 function calculateStats(values) {
-    const avg = values.reduce((a, b) => a + b, 0) / values.length;
-    const max = Math.max(...values);
-    const min = Math.min(...values);
-    return { avg: Number(avg.toFixed(2)), max: Number(max.toFixed(2)), min: Number(min.toFixed(2)) };
+    // Filter out zero values and count the zeros
+    const nonZeroValues = values.filter(value => value !== 0);
+    const zeroCount = values.length - nonZeroValues.length;
+    if (nonZeroValues.length === 0) {
+        return { avg: 0, max: 0, min: 0, zeroCount };
+    }
+
+    const avg = nonZeroValues.reduce((a, b) => a + b, 0) / nonZeroValues.length;
+    const max = Math.max(...nonZeroValues);
+    const min = Math.min(...nonZeroValues);
+
+    return { avg: Number(avg.toFixed(2)), max: Number(max.toFixed(2)), min: Number(min.toFixed(2)), zeroCount };
 }
 
 async function HEperformance(runs) {
@@ -79,17 +87,17 @@ async function HEperformance(runs) {
     const companyMainDurationStats = calculateStats(companyMainDuration);
 
     console.log("\nCompanySetup Stats:");
-    console.log(`CPU:\n\tAvg: ${companySetupCPUStats.avg}%, Max: ${companySetupCPUStats.max}%, Min: ${companySetupCPUStats.min}%`);
+    console.log(`CPU:\n\tAvg: ${companySetupCPUStats.avg}%, Max: ${companySetupCPUStats.max}%, Min: ${companySetupCPUStats.min}%, ZEROs: ${companySetupCPUStats.zeroCount}`);
     console.log(`Memory:\n\tAvg: ${companySetupMemoryStats.avg}MB, Max: ${companySetupMemoryStats.max}MB, Min: ${companySetupMemoryStats.min}MB`);
     console.log(`Duration:\n\tAvg: ${companySetupDurationStats.avg}ms, Max: ${companySetupDurationStats.max}ms, Min: ${companySetupDurationStats.min}ms`);
 
     console.log("\nStudentMain Stats:");
-    console.log(`CPU:\n\tAvg: ${studentMainCPUStats.avg}%, Max: ${studentMainCPUStats.max}%, Min: ${studentMainCPUStats.min}%`);
+    console.log(`CPU:\n\tAvg: ${studentMainCPUStats.avg}%, Max: ${studentMainCPUStats.max}%, Min: ${studentMainCPUStats.min}%, ZEROs: ${studentMainCPUStats.zeroCount}`);
     console.log(`Memory:\n\tAvg: ${studentMainMemoryStats.avg}MB, Max: ${studentMainMemoryStats.max}MB, Min: ${studentMainMemoryStats.min}MB`);
     console.log(`Duration:\n\tAvg: ${studentMainDurationStats.avg}ms, Max: ${studentMainDurationStats.max}ms, Min: ${studentMainDurationStats.min}ms`);
 
     console.log("\nCompanyMain Stats:");
-    console.log(`CPU:\n\tAvg: ${companyMainCPUStats.avg}%, Max: ${companyMainCPUStats.max}%, Min: ${companyMainCPUStats.min}%`);
+    console.log(`CPU:\n\tAvg: ${companyMainCPUStats.avg}%, Max: ${companyMainCPUStats.max}%, Min: ${companyMainCPUStats.min}%, ZEROs: ${companyMainCPUStats.zeroCount}`);
     console.log(`Memory:\n\tAvg: ${companyMainMemoryStats.avg}MB, Max: ${companyMainMemoryStats.max}MB, Min: ${companyMainMemoryStats.min}MB`);
     console.log(`Duration:\n\tAvg: ${companyMainDurationStats.avg}ms, Max: ${companyMainDurationStats.max}ms, Min: ${companyMainDurationStats.min}ms`);
 

@@ -23,10 +23,18 @@ async function measureFunctionExecution(func, label, ...args) {
 }
 
 function calculateStats(values) {
-    const avg = values.reduce((a, b) => a + b, 0) / values.length;
-    const max = Math.max(...values);
-    const min = Math.min(...values);
-    return { avg: Number(avg.toFixed(2)), max: Number(max.toFixed(2)), min: Number(min.toFixed(2)) };
+    // Filter out zero values and count the zeros
+    const nonZeroValues = values.filter(value => value !== 0);
+    const zeroCount = values.length - nonZeroValues.length;
+    if (nonZeroValues.length === 0) {
+        return { avg: 0, max: 0, min: 0, zeroCount };
+    }
+
+    const avg = nonZeroValues.reduce((a, b) => a + b, 0) / nonZeroValues.length;
+    const max = Math.max(...nonZeroValues);
+    const min = Math.min(...nonZeroValues);
+
+    return { avg: Number(avg.toFixed(2)), max: Number(max.toFixed(2)), min: Number(min.toFixed(2)), zeroCount };
 }
 
 async function ZKPperformance(runs) {
@@ -66,12 +74,12 @@ async function ZKPperformance(runs) {
     const verifyZKPDurationStats = calculateStats(verifyZKPDuration);
 
     console.log("\nGenerateZKP Stats:");
-    console.log(`CPU:\n\tAvg: ${generateZKPCPUStats.avg}%, Max: ${generateZKPCPUStats.max}%, Min: ${generateZKPCPUStats.min}%`);
+    console.log(`CPU:\n\tAvg: ${generateZKPCPUStats.avg}%, Max: ${generateZKPCPUStats.max}%, Min: ${generateZKPCPUStats.min}%, ZEROs: ${verifyZKPCPUStats.zeroCount}`);
     console.log(`Memory:\n\tAvg: ${generateZKPMemoryStats.avg}MB, Max: ${generateZKPMemoryStats.max}MB, Min: ${generateZKPMemoryStats.min}MB`);
     console.log(`Duration:\n\tAvg: ${generateZKPDurationStats.avg}ms, Max: ${generateZKPDurationStats.max}ms, Min: ${generateZKPDurationStats.min}ms`);
 
     console.log("\nVerifyZKP Stats:");
-    console.log(`CPU:\n\tAvg: ${verifyZKPCPUStats.avg}%, Max: ${verifyZKPCPUStats.max}%, Min: ${verifyZKPCPUStats.min}%`);
+    console.log(`CPU:\n\tAvg: ${verifyZKPCPUStats.avg}%, Max: ${verifyZKPCPUStats.max}%, Min: ${verifyZKPCPUStats.min}%, ZEROs: ${verifyZKPCPUStats.zeroCount}`);
     console.log(`Memory:\n\tAvg: ${verifyZKPMemoryStats.avg}MB, Max: ${verifyZKPMemoryStats.max}MB, Min: ${verifyZKPMemoryStats.min}MB`);
     console.log(`Duration:\n\tAvg: ${verifyZKPDurationStats.avg}ms, Max: ${verifyZKPDurationStats.max}ms, Min: ${verifyZKPDurationStats.min}ms`);
 
