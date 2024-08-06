@@ -32,14 +32,14 @@ def filter_non_zero(data):
 def plot_comparison(data, labels, title, y_label, filename):
     fig, ax = plt.subplots(figsize=(10, 8))
 
-    # Adjust flierprops to fill the outlier dots with blue and make them smaller
-    flierprops = dict(marker='o', color='blue', markersize=4, markerfacecolor='blue')
+    # Fill the outlier dots with blue and make them smaller
+    flierprops = dict(marker='o', color='red', markersize=4, markerfacecolor='red')
     ax.boxplot(data, labels=labels, flierprops=flierprops)
 
     ax.set_title(title)
     ax.set_ylabel(y_label)
     ax.set_ylim(bottom=0)
-    ax.grid(axis='y', linestyle=':', linewidth=0.5)  # Add dotted horizontal grid lines
+    ax.grid(axis='y', linestyle=':', linewidth=0.5)  # add dotted horizontal grid lines
 
     # Increase the number of y-axis ticks
     y_ticks = ax.get_yticks()
@@ -56,7 +56,7 @@ def plot_comparison(data, labels, title, y_label, filename):
     med_vals = [np.median(d) for d in data]
     min_vals = [np.min(d) for d in data]
 
-    # Create the table
+    # Create table
     table_data = [
         ["MAX"] + [f"{val:.2f}" for val in max_vals],
         ["AVG"] + [f"{val:.2f}" for val in avg_vals],
@@ -65,10 +65,10 @@ def plot_comparison(data, labels, title, y_label, filename):
     ]
 
     n_columns = len(labels) + 1
-    col_widths = [0.09] + [0.91 / (n_columns - 1)] * (n_columns - 1)  # Adjust column widths
+    col_widths = [0.09] + [0.91 / (n_columns - 1)] * (n_columns - 1)  # adjust column widths
 
     table = plt.table(cellText=table_data, loc='bottom', cellLoc='center',
-                      colWidths=col_widths, bbox=[-0.1, -0.35, 1.1, 0.28])
+                      colWidths=col_widths, bbox=[-0.1, -0.35, 1.1, 0.28])  # left, bottom, right, top
     table.auto_set_font_size(False)
     table.set_fontsize(10)
 
@@ -92,23 +92,23 @@ plot_comparison(
     'CPU Usage (%)',
     'cpu_usage_comparison'
 )
-#
-# # Memory Usage Comparison
-# plot_comparison(
-#     [new_zkp_metrics['GenMemory'], new_zkp_metrics['VerMemory'], new_he_metrics['SetupMemory'],
-#      new_he_metrics['CalculationMemory'], new_he_metrics['VerificationMemory']],
-#     x_labels,
-#     'Memory Usage Comparison',
-#     'Memory Usage (MB)',
-#     'memory_usage_comparison'
-# )
-#
-# # Duration Comparison
-# plot_comparison(
-#     [new_zkp_metrics['GenDuration'], new_zkp_metrics['VerDuration'], new_he_metrics['SetupDuration'],
-#      new_he_metrics['CalculationDuration'], new_he_metrics['VerificationDuration']],
-#     x_labels,
-#     'Duration Comparison',
-#     'Duration (ms)',
-#     'duration_comparison'
-# )
+
+# Memory Usage Comparison
+plot_comparison(
+    [new_zkp_metrics['GenMemory'], new_zkp_metrics['VerMemory'], new_he_metrics['SetupMemory'],
+     new_he_metrics['CalculationMemory'], new_he_metrics['VerificationMemory']],
+    x_labels,
+    'Memory Usage Comparison',
+    'Memory Usage (MB)',
+    'memory_usage_comparison'
+)
+
+# Duration Comparison
+plot_comparison(
+    [new_zkp_metrics['GenDuration'], new_zkp_metrics['VerDuration'], new_he_metrics['SetupDuration'],
+     new_he_metrics['CalculationDuration'], new_he_metrics['VerificationDuration']],
+    x_labels,
+    'Duration Comparison',
+    'Duration (ms)',
+    'duration_comparison'
+)
