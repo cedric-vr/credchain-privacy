@@ -31,14 +31,17 @@ def filter_non_zero(data):
 
 def plot_comparison(data, labels, title, y_label, filename):
     fig, ax = plt.subplots(figsize=(10, 8))
-    ax.boxplot(data, labels=labels)
+
+    # Adjust flierprops to fill the outlier dots with blue and make them smaller
+    flierprops = dict(marker='o', color='red', markersize=4, markerfacecolor='blue')
+    ax.boxplot(data, labels=labels, flierprops=flierprops)
+
     ax.set_title(title)
     ax.set_ylabel(y_label)
     ax.set_ylim(bottom=0)
     ax.grid(axis='y', linestyle=':', linewidth=0.5)  # Add dotted horizontal grid lines
 
     # Increase the number of y-axis ticks
-    ax = plt.gca()
     y_ticks = ax.get_yticks()
     new_y_ticks = []
     for i in range(1, len(y_ticks)):
@@ -68,6 +71,10 @@ def plot_comparison(data, labels, title, y_label, filename):
                       colWidths=col_widths, bbox=[-0.1, -0.35, 1.1, 0.25])
     table.auto_set_font_size(False)
     table.set_fontsize(10)
+
+    # Set the borderlines to be thinner
+    for key, cell in table.get_celld().items():
+        cell.set_linewidth(0.5)
 
     plt.subplots_adjust(left=0.2, bottom=0.4)
     plt.tight_layout(rect=[1, 0.1, 1, 0.95])
