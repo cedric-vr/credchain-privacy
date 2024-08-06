@@ -6,7 +6,7 @@ The project consists of mainly two parts at the moment: backend including smart 
 
 First, we need to compile and deploy smart contracts to the testnet. To do this, make sure all dependencies is installed on your environment or install using: 
 ```shell
-npm install -f
+npm install
 ```
 To deploy, start the hardhat node with:
 ```shell

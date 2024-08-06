@@ -17,10 +17,11 @@
     "web3": "^1.8.0"
   },
   "dependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
     "big-integer": "^1.6.51",
     "crypto-js": "^4.1.1",
     "ethereumjs-util": "^7.1.5",
-    "ethers": "^6.13.2",
+    "ethers": "^5.4.0",
     "json2csv": "^6.0.0-alpha.2",
     "node-seal": "^5.1.4",
     "paillier-bigint": "^3.4.3",
