@@ -9,7 +9,6 @@ const { emptyProducts, emptyStaticAccData } = require("../utilities/product");
 const { generateZKP } = require("../ZKP/student.js");
 const { verifyZKP } = require("../ZKP/company.js");
 const { verify } = require("../revocation/revocation");
-const pidusage = require('pidusage');
 const { performance, PerformanceObserver } = require('perf_hooks');
 
 // using the following approach for testing:
@@ -30,8 +29,6 @@ const obs = new PerformanceObserver((items) => {
     performance.clearMarks();
 });
 obs.observe({ entryTypes: ['measure'] });
-
-const cpuMaxGHz = 4.2; // Maximum clock speed in GHz
 
 
 describe("DID Registry", function() {
