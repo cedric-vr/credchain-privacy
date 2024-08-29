@@ -29,7 +29,7 @@ def filter_non_zero(data):
     return [value for value in data if value > 0]
 
 
-def plot_comparison(data, labels, title, y_label, filename):
+def plot_comparison(data, labels, title, y_label, filename, unit):
     fig, ax = plt.subplots(figsize=(10, 8))
 
     # Fill the outlier dots with blue and make them smaller
@@ -56,13 +56,13 @@ def plot_comparison(data, labels, title, y_label, filename):
     med_vals = [np.median(d) for d in data]
     min_vals = [np.min(d) for d in data]
 
-    # Create table
+    # Create table with units
     table_data = [
-        ["MAX"] + [f"{val:.2f}" for val in max_vals],
-        ["AVG"] + [f"{val:.2f}" for val in avg_vals],
-        ["MEDIAN"] + [f"{val:.2f}" for val in med_vals],
-        ["MIN"] + [f"{val:.2f}" for val in min_vals],
-    ]
+        ["MAX"] + [f"{val:.2f} {unit}" for val in max_vals],
+        ["AVG"] + [f"{val:.2f} {unit}" for val in avg_vals],
+        ["MEDIAN"] + [f"{val:.2f} {unit}" for val in med_vals],
+        ["MIN"] + [f"{val:.2f} {unit}" for val in min_vals],
+        ]
 
     n_columns = len(labels) + 1
     col_widths = [0.09] + [0.91 / (n_columns - 1)] * (n_columns - 1)  # adjust column widths
@@ -88,9 +88,10 @@ plot_comparison(
      filter_non_zero(new_he_metrics['SetupCPU']), filter_non_zero(new_he_metrics['CalculationCPU']),
      filter_non_zero(new_he_metrics['VerificationCPU'])],
     x_labels,
-    'CPU Usage Comparison',
+    'CPU Usage per Function',
     'CPU Usage (%)',
-    'cpu_usage_comparison'
+    'cpu_usage_comparison',
+    '%'
 )
 
 # Memory Usage Comparison
@@ -98,9 +99,10 @@ plot_comparison(
     [new_zkp_metrics['GenMemory'], new_zkp_metrics['VerMemory'], new_he_metrics['SetupMemory'],
      new_he_metrics['CalculationMemory'], new_he_metrics['VerificationMemory']],
     x_labels,
-    'Memory Usage Comparison',
+    'Memory Usage per Function',
     'Memory Usage (MB)',
-    'memory_usage_comparison'
+    'memory_usage_comparison',
+    'MB'
 )
 
 # Duration Comparison
@@ -108,7 +110,8 @@ plot_comparison(
     [new_zkp_metrics['GenDuration'], new_zkp_metrics['VerDuration'], new_he_metrics['SetupDuration'],
      new_he_metrics['CalculationDuration'], new_he_metrics['VerificationDuration']],
     x_labels,
-    'Duration Comparison',
+    'Duration per Function',
     'Duration (ms)',
-    'duration_comparison'
+    'duration_comparison',
+    'ms'
 )
