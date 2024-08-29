@@ -7,7 +7,7 @@ async function main() {
     const runs = parseInt(args[0], 10); // Parse the first argument as an integer
 
     // Use 10 as the default value if no valid argument is provided
-    const numberOfRuns = isNaN(runs) ? 10 : runs;
+    const numberOfRuns = isNaN(runs) ? 50 : runs;
 
     await ZKP_performance(numberOfRuns);
     console.log("\n==================================================");

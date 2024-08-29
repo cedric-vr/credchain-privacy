@@ -45,7 +45,7 @@ This outputs the estimated gas cost of sending the files which were generated du
 node utilities/gasEstimator.js
 ```
 ## Duration, CPU- and RAM-Usage
-Evaluate the benchmarks over a specified number of function runs. By default, it will run 10 times for the ZKP and the HE functions. Enter any integer to specify the amount of runs.
+Evaluate the benchmarks over a specified number of function runs. By default, it will run 50 times for the ZKP and the HE functions. Enter any integer to specify the amount of runs.
 ```shell
 node evaluation/generateBenchmarks.js
 ```
@@ -54,7 +54,7 @@ node evaluation/generateBenchmarks.js 50
 ```
 
 ## Plotting Data
-This project uses Python 3.11.9 to plot data. It is recommended to use a newer Python version (3.11 or newer) to avoid any compatibility issues. Use this command to plot the generated benchmark data. The plots are saved as .PNG files in the `evaluation` folder.
+This project uses Python 3.11.9 to plot data. It is recommended to use Python version 3.11 or newer to avoid any compatibility issues. Use this command to plot the generated benchmark data. The plots are saved as .PNG files in the `evaluation` folder.
 ```shell
 python evaluation/generateGraphs.py
 ```

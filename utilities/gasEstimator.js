@@ -2,9 +2,9 @@ const fs = require('fs');
 const { ethers } = require('ethers');
 const path = require('path');
 
-const ETH_PRICE_IN_USD = 3200;  // Price of 1 ETH in USD
-const GAS_PRICE_GWEI = 15;      // Default gas price in Gwei
-const storeOnChain = false;
+const ETH_PRICE_IN_USD = 2600;  // Price of 1 ETH in USD
+const GAS_PRICE_GWEI = 4;      // Default gas price in Gwei
+const storeOnChain = true;
 
 const paths = [
     './HomomorphicEncryption/companySetupData.json',
@@ -44,8 +44,9 @@ function estimateGas(filePath, ethPriceInUsd = ETH_PRICE_IN_USD, gasPriceGwei = 
         // Estimate gas required
         let totalGas;
         const baseTransactionCost = 21000;
-        const gasPerNonZeroByte = 68;
+        const gasPerNonZeroByte = 16;
         const gasPerZeroByte = 4;
+        const sLoadGasCost = 2100;
 
         let gasForData = 0;
         for (const char of dataString) {
@@ -56,10 +57,10 @@ function estimateGas(filePath, ethPriceInUsd = ETH_PRICE_IN_USD, gasPriceGwei = 
             }
         }
 
-        const storageCostPerSlot = 20000; // Example cost for writing to a storage slot
-        const numberOfStorageSlots = Math.ceil(dataSizeBytes / 32); // Assume data is stored in 32-byte slots
+        const storageCostPerSlot = 20000; // Cost for writing to a storage slot
+        const numberOfStorageSlots = Math.ceil(dataSizeBytes / 32); // Data is stored in 32-byte slots
         if (storeOnChain) {
-            totalGas = baseTransactionCost + gasForData + (storageCostPerSlot * numberOfStorageSlots);
+            totalGas = baseTransactionCost + gasForData + numberOfStorageSlots * (storageCostPerSlot + sLoadGasCost);
         } else {
             totalGas = baseTransactionCost + gasForData;
         }
@@ -89,6 +90,12 @@ async function runEstimations() {
         await estimateGas(path, ETH_PRICE_IN_USD, GAS_PRICE_GWEI, storeOnChain);
         await new Promise(r => setTimeout(r, 300));  // Delay to ensure proper logging
     }
+
+    console.log("==========================================================")
+    console.log("==========================================================")
+    console.log("Calculations with");
+    console.log("ETH Price (USD):", ETH_PRICE_IN_USD);
+    console.log("Gas Price (Gwei):", GAS_PRICE_GWEI);
 }
 
 runEstimations();
