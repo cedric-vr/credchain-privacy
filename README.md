@@ -56,7 +56,9 @@ node evaluation/generateBenchmarks.js 100
 ```
 
 ## Plotting Data
-This project uses Python 3.11.9 to plot data. It is recommended to use Python version 3.11 or newer to avoid any compatibility issues. Use this command to plot the generated benchmark data. The plots are saved as .PNG files in the `evaluation` folder.
+This project uses Python 3.11.9 to plot data. It is recommended to use Python version 3.11 or newer to avoid any compatibility issues. Make sure that the libraries `matplotlib`, `pandas` and `numpy` are installed.
+
+Use this command to plot the generated benchmark data. The plots are saved as .PNG files in the `\evaluation` folder.
 ```shell
 python evaluation/generateGraphs.py
 ```
