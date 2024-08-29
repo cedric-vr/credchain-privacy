@@ -2,27 +2,43 @@ const fs = require('fs');
 const { ethers } = require('ethers');
 const path = require('path');
 
-const ETH_PRICE_IN_USD = 2600;  // Price of 1 ETH in USD
-const GAS_PRICE_GWEI = 4;      // Default gas price in Gwei
-const storeOnChain = true;
+// Default values
+let ETH_PRICE_IN_USD = 2600;  // Default price of 1 ETH in USD
+let GAS_PRICE_GWEI = 4;       // Default gas price in Gwei
+let storeOnChain = false;     // Default
 
+// Get command-line arguments
+const args = process.argv.slice(2);
+
+// Parse command-line arguments
+args.forEach(arg => {
+    if (arg.startsWith('--ethPrice=')) {
+        ETH_PRICE_IN_USD = parseFloat(arg.split('=')[1]);
+    } else if (arg.startsWith('--gasPriceGwei=')) {
+        GAS_PRICE_GWEI = parseFloat(arg.split('=')[1]);
+    } else if (arg === '--storeOnChain') {
+        storeOnChain = true;
+    }
+});
+
+// Paths to JSON files
 const paths = [
     './HomomorphicEncryption/companySetupData.json',
     './HomomorphicEncryption/studentData.json',
     './ZKP/verificationKey.json',
     './ZKP/proof.json'
-]
+];
 
 /**
  * Reads a JSON file from the given path and estimates the gas required
  * to store its data on the Ethereum blockchain.
  *
  * @param {string} filePath - Path to the JSON file
- * @param {number} [ethPriceInUsd=ETH_PRICE_IN_USD] - Current price of ETH in USD
- * @param {number} [gasPriceGwei=GAS_PRICE_GWEI] - Gas price in Gwei
- * @param {boolean} [storeOnChain=false] - Whether to include storage costs
+ * @param {number} ethPriceInUsd - Current price of ETH in USD
+ * @param {number} gasPriceGwei - Gas price in Gwei
+ * @param {boolean} storeOnChain - Whether to include storage costs
  */
-function estimateGas(filePath, ethPriceInUsd = ETH_PRICE_IN_USD, gasPriceGwei = GAS_PRICE_GWEI, storeOnChain = false) {
+function estimateGas(filePath, ethPriceInUsd, gasPriceGwei, storeOnChain) {
     try {
         // Resolve the absolute path
         const absolutePath = path.resolve(filePath);
@@ -96,6 +112,7 @@ async function runEstimations() {
     console.log("Calculations with");
     console.log("ETH Price (USD):", ETH_PRICE_IN_USD);
     console.log("Gas Price (Gwei):", GAS_PRICE_GWEI);
+    console.log("Store On Chain:", storeOnChain);
 }
 
 runEstimations();

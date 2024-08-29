@@ -22,7 +22,7 @@ async function companySetup(degreeThresholdTimestamp) {
 
     const context = seal.Context(parms,   // Encryption Parameters
         true,                       // ExpandModChain
-        securityLevel                             // Enforce security level
+        securityLevel                              // Enforce security level
     );
 
     if (!context.parametersSet()) {
@@ -56,50 +56,51 @@ async function companySetup(degreeThresholdTimestamp) {
 async function companyMain(studentData, setupData) {
     const seal = await SEAL();
     const securityLevel = seal.SecurityLevel.tc128;
+    let valid = true;
 
-    // Load the context with saved parameters
-    const parmsFromFile = seal.EncryptionParameters();
-    parmsFromFile.load(setupData.parms);
-
-    const context = seal.Context(parmsFromFile, true, securityLevel);
-
-    const publicKey = seal.PublicKey();
-    publicKey.load(context, setupData.publicKey);
-
-    const cipherTextThresholdDate = seal.CipherText();
-    cipherTextThresholdDate.load(context, setupData.cipherTextThreshold);
-
-    const cipherTextIssuanceDateStudent = seal.CipherText();
-    cipherTextIssuanceDateStudent.load(context, studentData.cipherTextIssuanceDate);
-
-    const cipherTextResultStudent = seal.CipherText();
     try {
+        // Load the context with saved parameters
+        const parmsFromFile = seal.EncryptionParameters();
+        parmsFromFile.load(setupData.parms);
+
+        const context = seal.Context(parmsFromFile, true, securityLevel);
+
+        const publicKey = seal.PublicKey();
+        publicKey.load(context, setupData.publicKey);
+
+        const cipherTextThresholdDate = seal.CipherText();
+        cipherTextThresholdDate.load(context, setupData.cipherTextThreshold);
+
+        const cipherTextIssuanceDateStudent = seal.CipherText();
+        cipherTextIssuanceDateStudent.load(context, studentData.cipherTextIssuanceDate);
+
+        const cipherTextResultStudent = seal.CipherText();
         cipherTextResultStudent.load(context, studentData.cipherTextResult);
+
+        // Company performs the same computation
+        const evaluator = seal.Evaluator(context);
+        const cipherTextResult = seal.CipherText();
+        evaluator.sub(cipherTextThresholdDate, cipherTextIssuanceDateStudent, cipherTextResult);
+
+        // Convert ciphertexts to strings for comparison
+        const companyResultString = cipherTextResult.save();
+        const studentResultString = cipherTextResultStudent.save();
+
+        // Compare the company's computed encrypted result with the student's encrypted result
+        const isResultValid = companyResultString === studentResultString;
+
+        if (isResultValid) {
+            console.log("\tEncrypted results identical");
+        } else {
+            console.log("\tEncrypted results NOT identical");
+            valid = false;
+        }
     } catch (error) {
-        // Error occurs for "wrong" format, meaning if the result has been altered
-        console.log("\tIncompatible cipher text format.");
-        return false;
+        console.log("\tIncompatible encryption parameters or ciphertext format:", error.message);
+        valid = false;
     }
 
-    // Company performs the same computation
-    const evaluator = seal.Evaluator(context);
-    const cipherTextResult = seal.CipherText();
-    evaluator.sub(cipherTextThresholdDate, cipherTextIssuanceDateStudent, cipherTextResult);
-
-    // Convert ciphertexts to strings for comparison
-    const companyResultString = cipherTextResult.save();
-    const studentResultString = cipherTextResultStudent.save();
-
-    // Compare the company's computed encrypted result with the student's encrypted result
-    const isResultValid = companyResultString === studentResultString;
-
-    if (isResultValid) {
-        console.log("\tEncrypted results identical");
-    } else {
-        console.log("\tEncrypted results NOT identical");
-    }
-
-    return isResultValid;
+    return valid;
 }
 
 module.exports = { companyMain, companySetup };
