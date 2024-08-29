@@ -16,15 +16,11 @@ Open another terminal window and deploy the contracts:
 ```shell
 npx hardhat run --network localhost scripts/deploy.js
 ```
-Once the contracts deployed you can see the contract address in the node terminal (e.g., `0x5fbdb2315678afecb367f032d93f642f64180aa3`). 
-
-Since we are deploying few contracts, each one of them will have different address. Right now the `deploy.js` file contains all the deployment scripts that will be needed, but part of it is commented out so the only contract that is being deployed right now is DID Registry. 
-
-For each deployed contract we also need to add contract ABI and its address in `/src/utils/constants.js` file. Follow the same pattern as for DID Registry.  
+Once the contracts are deployed you can see the contract address in the node terminal (e.g., `0x5fbdb2315678afecb367f032d93f642f64180aa3`). 
 
 
 # Privacy Preserving Mechanisms
-This repo includes two privacy preserving mechanism prototypes to calculate and verify that a university degree has been issued after a specific date (Unix timestamp). Run the commands in the upmost folder of the repo.
+This repository includes two metadata privacy-preserving prototypes to calculate and verify that a university degree has been issued after a specific date (Unix timestamp). Run the commands in the upmost folder of the repository.
 
 ## 1) Zero-Knowledge Proof (ZKP)
 ```shell
@@ -37,20 +33,26 @@ npx hardhat test test/testHE.js
 ```
 
 # Evaluation
-After running the above two privacy-preserving mechanism tests, you can run the following command to evaluate the performance.
+After running the above two privacy-preserving mechanism tests, you can run the following commands to evaluate the performance.
 
 ## Gas Estimation
-This outputs the estimated gas cost of sending the files which were generated during the ZKP and HE process.
+This outputs the estimated gas cost of sending and storing the files which were generated during the ZKP and HE process. By default, an ETH price of 2600 USD and a network fee of 4 Gwei is used.
 ```shell
 node utilities/gasEstimator.js
 ```
+Use flags to modify one or all of the parameters for the gas estimation calculation. To calculate the gas cost of storing the data on the blockchain, append the `--storeOnChain` flag.
+```shell
+node utilities/gasEstimator.js --ethPrice=3200 --gasPriceGwei=40 --storeOnChain
+```
+
 ## Duration, CPU- and RAM-Usage
-Evaluate the benchmarks over a specified number of function runs. By default, it will run 50 times for the ZKP and the HE functions. Enter any integer to specify the amount of runs.
+Evaluate the benchmarks over a specified number of function runs. By default, it will run 50 times for the ZKP and the HE functions.
 ```shell
 node evaluation/generateBenchmarks.js
 ```
+Enter any integer to specify the amount of runs for both prototypes.
 ```shell
-node evaluation/generateBenchmarks.js 50
+node evaluation/generateBenchmarks.js 100
 ```
 
 ## Plotting Data
