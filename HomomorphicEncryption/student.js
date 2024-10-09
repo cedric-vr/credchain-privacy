@@ -1,46 +1,71 @@
 const SEAL = require('node-seal');
 const fs = require('fs');
+const crypto = require("crypto");
 
 async function studentMain(degreeIssuanceTimestamp, setupData) {
     const seal = await SEAL();
     const securityLevel = seal.SecurityLevel.tc128;
+    const bitSizeFloat = 40;
+    const rand = generateSecureRandomFloat();
 
     // Load the context with saved parameters
     const parmsFromFile = seal.EncryptionParameters();
     parmsFromFile.load(setupData.parms);
 
-    const contextFromFile = seal.Context(parmsFromFile, true, securityLevel);
+    const context = seal.Context(parmsFromFile, true, securityLevel);
 
     const publicKeyFromFile = seal.PublicKey();
-    publicKeyFromFile.load(contextFromFile, setupData.publicKey);
+    publicKeyFromFile.load(context, setupData.publicKey);
 
-    const cipherTextFromFile = seal.CipherText();
-    cipherTextFromFile.load(contextFromFile, setupData.cipherTextThreshold);
+    const cDegreeThresholdTimestamp = seal.CipherText();
+    cDegreeThresholdTimestamp.load(context, setupData.cipherTextThreshold);
 
-    const encoder = seal.BatchEncoder(contextFromFile);
-    const encryptor = seal.Encryptor(contextFromFile, publicKeyFromFile);
-    const evaluator = seal.Evaluator(contextFromFile);
+    const evaluator = seal.Evaluator(context);
+    const ckksEncoder = seal.CKKSEncoder(context);
+    const encryptor = seal.Encryptor(context, publicKeyFromFile);
 
-    // Encode the numbers
-    const plainText = encoder.encode(Int32Array.from([degreeIssuanceTimestamp]));
+    const pRand = seal.PlainText();
+    ckksEncoder.encode(Float64Array.from([rand]), Math.pow(2, bitSizeFloat), pRand);
 
-    // Encrypt the PlainTexts
-    const cipherText = encryptor.encrypt(plainText);
+    const pDegreeIssuanceTimestamp = seal.PlainText();
+    ckksEncoder.encode(Float64Array.from([degreeIssuanceTimestamp]), Math.pow(2, bitSizeFloat), pDegreeIssuanceTimestamp);
 
-    // Subtract A from B and store it in cipherTextResult
-    const cipherTextResult = seal.CipherText();
-    evaluator.sub(cipherTextFromFile, cipherText, cipherTextResult);
+    const cDegreeIssuanceTimestamp = seal.CipherText();
+    encryptor.encrypt(pDegreeIssuanceTimestamp, cDegreeIssuanceTimestamp);
+
+    const cResultSubtraction = seal.CipherText();
+    evaluator.sub(cDegreeThresholdTimestamp, cDegreeIssuanceTimestamp, cResultSubtraction);
+
+    const cResultMultiplication = seal.CipherText();
+    evaluator.multiplyPlain(cResultSubtraction, pRand, cResultMultiplication);
+
 
     // Create the JSON object
     const studentData = {
-        cipherTextIssuanceDate: cipherText.save(),
-        cipherTextResult: cipherTextResult.save()
+        cipherTextResult: cResultMultiplication.save(),
     };
 
     // Save the results to file
     fs.writeFileSync('./HomomorphicEncryption/studentData.json', JSON.stringify(studentData));
 
     return studentData;
+}
+
+function generateSecureRandomFloat() {
+    const magnitudes = [1, 0.1, 0.01, 0.001];  // Define supported magnitudes
+
+    // Randomly choose a magnitude
+    const randomMagnitudeIndex = crypto.getRandomValues(new Uint32Array(1))[0] % magnitudes.length;
+    const chosenMagnitude = magnitudes[randomMagnitudeIndex];
+
+    // Generate a secure random float between 0 and 1
+    const randomBuffer = new Uint32Array(1);
+    crypto.getRandomValues(randomBuffer);
+    const randomFloat = randomBuffer[0] / (0xFFFFFFFF + 1);
+
+    // Scale the random float by the chosen magnitude
+    const scaledFloat = randomFloat * chosenMagnitude;
+    return parseFloat(scaledFloat.toFixed(5));
 }
 
 module.exports = { studentMain };

@@ -9,8 +9,6 @@ const { Parser } = require('json2csv');
 const degreeThresholdTimestamp = 1262304000;  // Unix timestamp: Fri Jan 01 2010 00:00:00
 const degreeIssuanceTimestamp = 1500000000;   // Unix timestamp: Fri Jul 14 2017 02:40:00
 
-const cpuMaxGHz = 4.2; // Maximum clock speed in GHz
-
 async function measureFunctionExecution(func, label, ...args) {
     performance.mark(`${label}-start`);
     const result = await func(...args);
@@ -43,8 +41,6 @@ async function HEperformance(runs) {
     const obs = new PerformanceObserver((items) => {});
     obs.observe({ entryTypes: ['measure'] });
 
-    let initialStats = await pidusage(process.pid);
-
     let companySetupStats = [];
     let studentMainStats = [];
     let companyMainStats = [];
@@ -55,10 +51,10 @@ async function HEperformance(runs) {
         const setupStats = await measureFunctionExecution(companySetup, 'companySetup', degreeThresholdTimestamp);
         companySetupStats.push(setupStats);
 
-        const studentStats = await measureFunctionExecution(studentMain, 'studentMain', degreeIssuanceTimestamp, setupStats.result);
+        const studentStats = await measureFunctionExecution(studentMain, 'studentMain', degreeIssuanceTimestamp, setupStats.result.companySetupData);
         studentMainStats.push(studentStats);
 
-        const companyStats = await measureFunctionExecution(companyMain, 'companyMain', studentStats.result, setupStats.result);
+        const companyStats = await measureFunctionExecution(companyMain, 'companyMain', studentStats.result, setupStats.result.companySetupData, setupStats.result.companySecretKey);
         companyMainStats.push(companyStats);
     }
 
